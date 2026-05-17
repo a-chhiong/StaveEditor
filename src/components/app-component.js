@@ -111,7 +111,7 @@ export class AppComponent extends LitElement {
 
     constructor() {
         super();
-        this.abcCode = this._loadFromStorage() || this._getDefaultABC();
+        this.abcCode = this._loadFromUrl() || this._loadFromStorage() || this._getDefaultABC();
         this.status = 'Ready';
         this.isError = false;
         this.visualObj = null;
@@ -184,6 +184,20 @@ export class AppComponent extends LitElement {
         }, 50);
     }
 
+    _loadFromUrl() {
+        const params = new URLSearchParams(window.location.search);
+        const encoded = params.get('abc');
+        if (encoded && window.LZString) {
+            try {
+                const decoded = window.LZString.decompressFromEncodedURIComponent(encoded);
+                if (decoded) return decoded;
+            } catch (e) {
+                console.error("Failed to parse ABC from URL", e);
+            }
+        }
+        return null;
+    }
+
     _getDefaultABC() {
         return `X: 1
 T: Ode to Joy
@@ -204,6 +218,12 @@ K: G
     handleABCChanged(e) {
         this.abcCode = e.detail;
         localStorage.setItem('abcNotation', this.abcCode);
+        
+        if (window.LZString) {
+            const compressed = window.LZString.compressToEncodedURIComponent(this.abcCode);
+            const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?abc=' + compressed;
+            window.history.replaceState({ path: newUrl }, '', newUrl);
+        }
     }
 
     handleStatusChanged(e) {

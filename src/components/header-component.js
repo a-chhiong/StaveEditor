@@ -122,6 +122,33 @@ export class HeaderComponent extends LitElement {
             animation: pulse-glow-emerald 2s infinite ease-in-out;
         }
 
+        .share-btn {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            background: linear-gradient(135deg, var(--accent-indigo) 0%, var(--accent-violet) 100%);
+            border: none;
+            padding: 5px 12px;
+            border-radius: 6px;
+            margin-left: 8px;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            box-shadow: 0 2px 8px rgba(139, 92, 246, 0.25);
+        }
+
+        .share-btn:hover {
+            background: linear-gradient(135deg, var(--accent-indigo) 20%, var(--accent-violet) 100%);
+            box-shadow: 0 2px 12px rgba(139, 92, 246, 0.4);
+            transform: translateY(-1px);
+        }
+
+        .share-btn:active {
+            transform: translateY(0);
+        }
+
         @keyframes pulse-glow-logo {
             0%, 100% { transform: scale(1); filter: drop-shadow(0 0 2px rgba(167, 139, 250, 0.2)); }
             50% { transform: scale(1.08); filter: drop-shadow(0 0 8px rgba(167, 139, 250, 0.6)); }
@@ -152,6 +179,27 @@ export class HeaderComponent extends LitElement {
         super();
         this.status = 'Ready';
         this.isError = false;
+        this.shareText = 'Share';
+    }
+
+    async handleShare() {
+        try {
+            await navigator.clipboard.writeText(window.location.href);
+            this.shareText = 'Copied!';
+            this.requestUpdate();
+            setTimeout(() => {
+                this.shareText = 'Share';
+                this.requestUpdate();
+            }, 2000);
+        } catch (err) {
+            console.error('Failed to copy URL:', err);
+            this.shareText = 'Failed';
+            this.requestUpdate();
+            setTimeout(() => {
+                this.shareText = 'Share';
+                this.requestUpdate();
+            }, 2000);
+        }
     }
 
     render() {
@@ -174,6 +222,10 @@ export class HeaderComponent extends LitElement {
                         <span class="autosave-pulse"></span>
                         Autosave Active
                     </span>
+                    
+                    <button class="share-btn" @click="${this.handleShare}" title="Copy link to this composition">
+                        🔗 <span>${this.shareText}</span>
+                    </button>
                 </div>
             </div>
         `;
