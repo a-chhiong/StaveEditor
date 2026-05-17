@@ -2,7 +2,8 @@ import { LitElement, html, css } from 'lit';
 
 export class EditorComponent extends LitElement {
     static properties = {
-        abcCode: { type: String }
+        abcCode: { type: String },
+        isToolbarExpanded: { type: Boolean }
     };
 
     static styles = css`
@@ -53,57 +54,46 @@ export class EditorComponent extends LitElement {
             gap: 8px;
         }
 
-        /* Preset Loader Select */
-        .preset-select {
-            background: var(--bg-primary);
-            border: 1px solid var(--border-color);
-            color: var(--text-primary);
-            font-family: var(--font-ui);
-            font-size: 0.8rem;
-            font-weight: 500;
-            padding: 5px 24px 5px 10px;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all var(--transition-fast);
-            appearance: none;
-            -webkit-appearance: none;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 8px center;
-            background-size: 12px;
-        }
-
-        .preset-select:hover {
-            border-color: var(--accent-violet);
-            box-shadow: 0 0 8px rgba(139, 92, 246, 0.25);
-        }
-
-        .preset-select:focus {
-            outline: none;
-            border-color: var(--accent-violet);
-        }
-
         /* Action Buttons */
         .action-btn {
             background: rgba(255, 255, 255, 0.05);
             border: 1px solid var(--border-color);
             color: var(--text-secondary);
             font-family: var(--font-ui);
-            font-size: 0.8rem;
-            font-weight: 500;
+            font-size: 0.78rem;
+            font-weight: 600;
             padding: 5px 10px;
             border-radius: 6px;
             cursor: pointer;
             transition: all var(--transition-fast);
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 5px;
+            white-space: nowrap;
         }
 
         .action-btn:hover {
             background: rgba(255, 255, 255, 0.1);
             color: var(--text-primary);
             border-color: var(--border-hover);
+        }
+
+        .action-btn.primary {
+            background: linear-gradient(135deg, var(--accent-indigo) 0%, var(--accent-violet) 100%);
+            border: none;
+            color: var(--text-primary);
+            box-shadow: 0 2px 8px rgba(139, 92, 246, 0.25);
+        }
+
+        .action-btn.primary:hover {
+            background: linear-gradient(135deg, var(--accent-indigo) 20%, var(--accent-violet) 100%);
+            box-shadow: 0 2px 12px rgba(139, 92, 246, 0.4);
+        }
+
+        .action-btn.danger:hover {
+            background: rgba(244, 63, 94, 0.15);
+            border-color: var(--accent-rose);
+            color: var(--accent-rose);
         }
 
         /* Code Editor Input */
@@ -143,6 +133,10 @@ export class EditorComponent extends LitElement {
             background: rgba(15, 23, 42, 0.9);
             border-top: 1px solid var(--border-color);
             flex-shrink: 0;
+        }
+
+        .quick-toolbar.collapsed {
+            display: none;
         }
 
         .toolbar-group {
@@ -201,16 +195,20 @@ export class EditorComponent extends LitElement {
 
         @media (max-width: 768px) {
             .editor-header {
-                padding: 8px 12px;
+                padding: 6px 10px;
             }
 
             .header-title span {
                 display: none;
             }
 
-            .preset-select {
-                font-size: 0.75rem;
-                padding: 4px 20px 4px 8px;
+            .btn-text {
+                display: none;
+            }
+
+            .action-btn {
+                padding: 5px 8px;
+                gap: 0;
             }
 
             .editor-input {
@@ -242,6 +240,11 @@ export class EditorComponent extends LitElement {
     constructor() {
         super();
         this.abcCode = '';
+        this.isToolbarExpanded = false;
+    }
+
+    toggleToolbar() {
+        this.isToolbarExpanded = !this.isToolbarExpanded;
     }
 
     handleInput(e) {
@@ -256,92 +259,66 @@ export class EditorComponent extends LitElement {
         }));
     }
 
-    handlePresetChange(e) {
-        const selectedValue = e.target.value;
-        let newABC = '';
 
-        switch (selectedValue) {
-            case 'ode-to-joy':
-                newABC = `X: 1
-T: Ode to Joy
-C: Ludwig van Beethoven
-M: 4/4
-L: 1/4
-K: G
-|: B B c d | d c B A | G G A B | B > A A2 |
-   B B c d | d c B A | G G A B | A > G G2 :|
-|: A A B G | A B/c/ B G | A B/c/ B A | G A D2 |
-   B B c d | d c B A | G G A B | A > G G2 :|`;
-                break;
-            case 'c-scale':
-                newABC = `X: 1
-T: C Major Scale & Arpeggio
-M: 4/4
-L: 1/4
-K: C
-C D E F | G A B c | c B A G | F E D C |
-C E G c | c G E C | [CEG]4 |]`;
-                break;
-            case 'happy-birthday':
-                newABC = `X: 1
-T: Happy Birthday to You
-M: 3/4
-L: 1/4
-K: F
-C/2>C/2 D C | F E2 | C/2>C/2 D C | G F2 |
-C/2>C/2 c A | F/2>E/2 D B/2>B/2 | A F G | F3 |]`;
-                break;
-            case 'bach-minuet':
-                newABC = `X: 1
-T: Minuet in G Major
-C: Christian Petzold (JS Bach)
-M: 3/4
-L: 1/8
-K: G
-|: d2 GABc | d2 G2 G2 | e2 cdef | g2 G2 G2 |
-   c2 defg | a2 f2 ed | gfedcB | a2 A2 A2 :|
-|: b2 GABc | b2 G2 G2 | a2 ABcd | a2 A2 A2 |
-   f2 defg | g2 f2 ed | gfedcB | g2 G2 G2 :|`;
-                break;
-            case 'jazz-chords':
-                newABC = `X: 1
-T: Jazz ii-V-I Progression
-M: 4/4
-L: 1/1
-K: C
-"Dm7"[DFAc] | "G7"[GBdf] | "Cmaj7"[CEGB] | "A7"[^CGA^c] |
-"Dm7"[DFAc] | "G7"[GBdf] | "Cmaj7"[CEGB]4 |]`;
-                break;
-            case 'two-voices':
-                newABC = `X: 1
-T: Invention No. 1 - Excerpt
-C: J.S. Bach
-M: 4/4
-L: 1/8
-K: C
-V: 1 clef=treble name="Treble"
-z CDE FDEC | G2 c2 B2 c2 | d2 G2 c2 B2 | c8 |
-V: 2 clef=bass name="Bass"
-C,8 | C,2 D,,E,, F,,D,,E,,C,, | G,,2 C,,2 B,,2 C,,2 | C,8 |]`;
-                break;
-            default:
-                return;
+
+    triggerFileInput() {
+        const fileInput = this.shadowRoot.getElementById('abc-file-input');
+        if (fileInput) {
+            fileInput.click();
+        }
+    }
+
+    handleLoadABCFile(e) {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const content = event.target.result;
+            this.abcCode = content;
+            this._dispatchABCChanged(content);
+            e.target.value = '';
+        };
+        reader.readAsText(file);
+    }
+
+    _parseABCField(field) {
+        if (!this.abcCode) return '';
+        const match = this.abcCode.match(new RegExp(`^${field}:\\s*(.*)$`, 'm'));
+        return match ? match[1].trim() : '';
+    }
+
+    handleSaveABCFile() {
+        if (!this.abcCode || !this.abcCode.trim()) {
+            alert('Please write some music first!');
+            return;
         }
 
-        this.abcCode = newABC;
-        this._dispatchABCChanged(newABC);
-        
-        // Reset the select element visual back to the placeholder/selected preset
-        const select = this.shadowRoot.querySelector('.preset-select');
-        select.value = selectedValue;
+        try {
+            const title = this._parseABCField('T') || 'composition';
+            const cleanTitle = title.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'composition';
+
+            const blob = new Blob([this.abcCode], { type: 'text/plain;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `${cleanTitle}.abc`;
+
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            alert('Failed to save ABC file: ' + error.message);
+        }
     }
 
     handleClear() {
-        if (confirm('Clear editor contents?')) {
+        if (!this.abcCode || !this.abcCode.trim()) return;
+
+        if (confirm('⚠️ WARNING: This will delete everything in the editor.\n\nAre you sure you want to clear all contents? This action cannot be undone.')) {
             this.abcCode = '';
             this._dispatchABCChanged('');
-            const select = this.shadowRoot.querySelector('.preset-select');
-            select.value = '';
         }
     }
 
@@ -352,16 +329,16 @@ C,8 | C,2 D,,E,, F,,D,,E,,C,, | G,,2 C,,2 B,,2 C,,2 | C,8 |]`;
         const text = textarea.value;
         const before = text.substring(0, start);
         const after = text.substring(end, text.length);
-        
+
         const newValue = before + symbol + after;
         this.abcCode = newValue;
         textarea.value = newValue;
-        
+
         // Reposition cursor
         const newCursorPos = start + symbol.length;
         textarea.selectionStart = textarea.selectionEnd = newCursorPos;
         textarea.focus();
-        
+
         this._dispatchABCChanged(newValue);
     }
 
@@ -373,17 +350,19 @@ C,8 | C,2 D,,E,, F,,D,,E,,C,, | G,,2 C,,2 B,,2 C,,2 | C,8 |]`;
                         ✏️ <span>ABC Editor</span>
                     </div>
                     <div class="header-controls">
-                        <select class="preset-select" @change="${this.handlePresetChange.bind(this)}">
-                            <option value="">📂 Select Song Preset</option>
-                            <option value="ode-to-joy">Ode to Joy (Beethoven)</option>
-                            <option value="c-scale">C Major Scale</option>
-                            <option value="happy-birthday">Happy Birthday</option>
-                            <option value="bach-minuet">Bach Minuet in G</option>
-                            <option value="jazz-chords">Jazz ii-V-I Progression</option>
-                            <option value="two-voices">Bach Two-Voices</option>
-                        </select>
-                        <button class="action-btn" @click="${this.handleClear.bind(this)}" title="Clear all text">
-                            🗑️ Clear
+                        <button class="action-btn" @click="${this.toggleToolbar}" title="Toggle Insert Toolbar">
+                            ${this.isToolbarExpanded ? '🔽' : '▶️'} <span class="btn-text">Insert</span>
+                        </button>
+                        <input type="file" id="abc-file-input" accept=".abc,.txt" style="display: none;" @change="${this.handleLoadABCFile}">
+                        
+                        <button class="action-btn" @click="${this.triggerFileInput}" title="Load .abc notation file from your device">
+                            📂 <span class="btn-text">Load ABC</span>
+                        </button>
+                        <button class="action-btn" @click="${this.handleSaveABCFile}" title="Save current composition as a raw .abc file">
+                            💾 <span class="btn-text">Save ABC</span>
+                        </button>
+                        <button class="action-btn danger" @click="${this.handleClear}" title="Clear all text">
+                            🗑️ <span class="btn-text">Clear</span>
                         </button>
                     </div>
                 </div>
@@ -398,7 +377,7 @@ C,8 | C,2 D,,E,, F,,D,,E,,C,, | G,,2 C,,2 B,,2 C,,2 | C,8 |]`;
                     ></textarea>
                 </div>
 
-                <div class="quick-toolbar">
+                <div class="quick-toolbar ${this.isToolbarExpanded ? '' : 'collapsed'}">
                     <div class="toolbar-group">
                         <span class="toolbar-group-label">Insert:</span>
                         <button class="toolbar-btn" @click="${() => this.insertSymbol('|')}" title="Barline">|</button>

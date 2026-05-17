@@ -4,7 +4,8 @@ export class PreviewComponent extends LitElement {
     static properties = {
         abcCode: { type: String },
         zoom: { type: Number },
-        warnings: { type: Array }
+        warnings: { type: Array },
+        visualObj: { type: Object }
     };
 
     static styles = css`
@@ -219,6 +220,54 @@ export class PreviewComponent extends LitElement {
             font-weight: 500;
         }
 
+        /* Action Controls Group */
+        .header-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Action Buttons */
+        .action-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            font-family: var(--font-ui);
+            font-size: 0.75rem;
+            font-weight: 600;
+            padding: 5px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all var(--transition-fast);
+            user-select: none;
+            white-space: nowrap;
+        }
+
+        .action-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.15);
+            transform: translateY(-1px);
+        }
+
+        .action-btn:active {
+            transform: translateY(0);
+        }
+
+        .action-btn.primary {
+            background: linear-gradient(135deg, var(--accent-indigo) 0%, var(--accent-violet) 100%);
+            border: none;
+            box-shadow: 0 2px 8px rgba(139, 92, 246, 0.2);
+        }
+
+        .action-btn.primary:hover {
+            background: linear-gradient(135deg, var(--accent-indigo) 20%, var(--accent-violet) 100%);
+            box-shadow: 0 2px 12px rgba(139, 92, 246, 0.4);
+        }
+
         @media (max-width: 768px) {
             .preview-canvas {
                 padding: 12px;
@@ -231,11 +280,30 @@ export class PreviewComponent extends LitElement {
             .preview-header {
                 padding: 8px 12px;
             }
+
+            .btn-text {
+                display: none;
+            }
+
+            .action-btn {
+                padding: 5px 8px;
+                font-size: 0.85rem;
+            }
         }
 
         @keyframes pulse-slow {
             0%, 100% { opacity: 0.4; }
             50% { opacity: 0.8; }
+        }
+
+        /* Interactive Note Highlighting while Playing MIDI */
+        .abcjs-note-playing,
+        .abcjs-note-playing path,
+        .abcjs-note-playing rect {
+            fill: var(--accent-violet) !important;
+            stroke: var(--accent-violet) !important;
+            filter: drop-shadow(0 0 3px rgba(139, 92, 246, 0.8)) !important;
+            transition: fill var(--transition-fast), stroke var(--transition-fast);
         }
     `;
 
@@ -244,6 +312,7 @@ export class PreviewComponent extends LitElement {
         this.abcCode = '';
         this.zoom = 1.0;
         this.warnings = [];
+        this.visualObj = null;
         this._renderTimeout = null;
     }
 
@@ -290,6 +359,7 @@ export class PreviewComponent extends LitElement {
         if (!code) {
             displayDiv.innerHTML = '';
             this.warnings = [];
+            this.visualObj = null;
             this.dispatchEvent(new CustomEvent('status-changed', {
                 detail: { status: 'Ready', isError: false },
                 bubbles: true,
@@ -321,6 +391,7 @@ export class PreviewComponent extends LitElement {
 
             if (visualObjArray && visualObjArray.length > 0) {
                 const visualObj = visualObjArray[0];
+                this.visualObj = visualObj;
                 
                 // Read parsing warnings
                 const warnings = visualObj.warnings || [];
@@ -347,6 +418,7 @@ export class PreviewComponent extends LitElement {
         } catch (error) {
             console.error(error);
             displayDiv.innerHTML = '';
+            this.visualObj = null;
             this.warnings = [{ message: error.message, line: 'System', column: '' }];
             
             this.dispatchEvent(new CustomEvent('status-changed', {
@@ -363,6 +435,55 @@ export class PreviewComponent extends LitElement {
         }
     }
 
+    handleExportSVG() {
+        const svg = this.shadowRoot.querySelector('.notation-display svg');
+        if (!svg) {
+            alert('Please write some music first!');
+            return;
+        }
+
+        try {
+            const svgString = new XMLSerializer().serializeToString(svg);
+            const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = 'stave.svg';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        } catch (error) {
+            alert('Failed to export SVG: ' + error.message);
+        }
+    }
+
+    handleCopySVG() {
+        const svg = this.shadowRoot.querySelector('.notation-display svg');
+        if (!svg) {
+            alert('Please write some music first!');
+            return;
+        }
+
+        try {
+            const svgString = new XMLSerializer().serializeToString(svg);
+            navigator.clipboard.writeText(svgString).then(() => {
+                alert('✓ SVG Code copied to clipboard!');
+            }).catch(err => {
+                console.error("Clipboard API failed, trying fallback:", err);
+                const textarea = document.createElement('textarea');
+                textarea.value = svgString;
+                document.body.appendChild(textarea);
+                textarea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textarea);
+                alert('✓ SVG Code copied to clipboard!');
+            });
+        } catch (error) {
+            alert('Failed to copy SVG: ' + error.message);
+        }
+    }
+
     render() {
         const hasCode = this.abcCode?.trim().length > 0;
         const paperWidthPercent = Math.round(this.zoom * 100);
@@ -373,6 +494,16 @@ export class PreviewComponent extends LitElement {
                     <div class="header-title">
                         🎼 <span>Sheet Music Preview</span>
                     </div>
+                    
+                    <div class="header-controls">
+                        <button class="action-btn primary" @click="${this.handleExportSVG}" title="Download Sheet Music as Vector SVG">
+                            📥 <span class="btn-text">SVG Stave</span>
+                        </button>
+                        <button class="action-btn" @click="${this.handleCopySVG}" title="Copy Raw SVG XML Code to Clipboard">
+                            📋 <span class="btn-text">Copy SVG</span>
+                        </button>
+                    </div>
+
                     <div class="zoom-controls">
                         <button class="zoom-btn" @click="${this.zoomOut}" ?disabled="${this.zoom <= 0.6}" title="Zoom Out">-</button>
                         <span class="zoom-value">${paperWidthPercent}%</span>

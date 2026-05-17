@@ -1,0 +1,183 @@
+import { LitElement, html, css } from 'lit';
+
+export class HeaderComponent extends LitElement {
+    static properties = {
+        status: { type: String },
+        isError: { type: Boolean }
+    };
+
+    static styles = css`
+        :host {
+            display: block;
+            width: 100%;
+        }
+
+        .header-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            height: 56px;
+            padding: 0 20px;
+            background: rgba(15, 23, 42, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+            box-sizing: border-box;
+        }
+
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            font-size: 1.4rem;
+            animation: pulse-glow-logo 2s infinite ease-in-out;
+        }
+
+        .logo-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #a78bfa 0%, #6366f1 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.02em;
+        }
+
+        .logo-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 500;
+            border-left: 1px solid rgba(255, 255, 255, 0.15);
+            padding-left: 10px;
+            margin-left: 2px;
+            display: inline-block;
+        }
+
+        /* Status & Autosave Area */
+        .status-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-badge {
+            font-size: 0.68rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 3px 8px;
+            border-radius: 4px;
+            letter-spacing: 0.05em;
+            transition: all var(--transition-fast);
+        }
+
+        .status-badge.ready {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-emerald);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            box-shadow: 0 0 8px rgba(16, 185, 129, 0.1);
+        }
+
+        .status-badge.error {
+            background: rgba(244, 63, 94, 0.15);
+            color: var(--accent-rose);
+            border: 1px solid rgba(244, 63, 94, 0.25);
+            box-shadow: 0 0 8px rgba(244, 63, 94, 0.1);
+        }
+
+        .status-text {
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            font-family: var(--font-ui);
+            max-width: 250px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .autosave-badge {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            padding: 4px 10px;
+            border-radius: 99px;
+            margin-left: 8px;
+            transition: all var(--transition-fast);
+        }
+
+        .autosave-pulse {
+            width: 6px;
+            height: 6px;
+            background-color: var(--accent-emerald);
+            border-radius: 50%;
+            display: inline-block;
+            box-shadow: 0 0 6px var(--accent-emerald);
+            animation: pulse-glow-emerald 2s infinite ease-in-out;
+        }
+
+        @keyframes pulse-glow-logo {
+            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 2px rgba(167, 139, 250, 0.2)); }
+            50% { transform: scale(1.08); filter: drop-shadow(0 0 8px rgba(167, 139, 250, 0.6)); }
+        }
+
+        @keyframes pulse-glow-emerald {
+            0%, 100% { transform: scale(1); opacity: 0.4; }
+            50% { transform: scale(1.2); opacity: 1; }
+        }
+
+        @media (max-width: 768px) {
+            .logo-subtitle {
+                display: none;
+            }
+
+            .status-text {
+                display: none; /* Hide status text on small viewports to save space */
+            }
+
+            .autosave-badge {
+                padding: 4px 8px;
+                font-size: 0.68rem;
+            }
+        }
+    `;
+
+    constructor() {
+        super();
+        this.status = 'Ready';
+        this.isError = false;
+    }
+
+    render() {
+        const badgeClass = this.isError ? 'status-badge error' : 'status-badge ready';
+        const badgeText = this.isError ? 'Error' : 'Ready';
+
+        return html`
+            <div class="header-container">
+                <div class="logo-area">
+                    <span class="logo-icon">🎼</span>
+                    <span class="logo-title">StaveEditor</span>
+                    <span class="logo-subtitle">Lit-based ABC Studio</span>
+                </div>
+
+                <div class="status-area">
+                    <span class="${badgeClass}">${badgeText}</span>
+                    <span class="status-text">${this.status}</span>
+                    
+                    <span class="autosave-badge" title="Automatically backed up to local storage regularly">
+                        <span class="autosave-pulse"></span>
+                        Autosave Active
+                    </span>
+                </div>
+            </div>
+        `;
+    }
+}
+
+

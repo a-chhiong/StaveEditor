@@ -27,49 +27,7 @@ export class AppComponent extends LitElement {
             overflow: hidden;
         }
 
-        .app-header {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            height: 56px;
-            padding: 0 20px;
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-bottom: 1px solid var(--border-color);
-            flex-shrink: 0;
-            z-index: 10;
-        }
 
-        .logo-area {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-
-        .logo-icon {
-            font-size: 1.4rem;
-            animation: pulse-glow 2s infinite ease-in-out;
-        }
-
-        .logo-title {
-            font-size: 1.15rem;
-            font-weight: 700;
-            background: linear-gradient(135deg, #a78bfa 0%, #6366f1 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            letter-spacing: -0.02em;
-        }
-
-        .logo-subtitle {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            font-weight: 500;
-            border-left: 1px solid rgba(255, 255, 255, 0.15);
-            padding-left: 10px;
-            margin-left: 2px;
-            display: inline-block;
-        }
 
         .app-main {
             display: flex;
@@ -148,14 +106,6 @@ export class AppComponent extends LitElement {
                 height: 16px;
             }
 
-            .logo-subtitle {
-                display: none;
-            }
-        }
-
-        @keyframes pulse-glow {
-            0%, 100% { transform: scale(1); filter: drop-shadow(0 0 2px rgba(167, 139, 250, 0.2)); }
-            50% { transform: scale(1.08); filter: drop-shadow(0 0 8px rgba(167, 139, 250, 0.6)); }
         }
     `;
 
@@ -270,13 +220,10 @@ K: G
         
         return html`
             <div class="app-container">
-                <header class="app-header">
-                    <div class="logo-area">
-                        <span class="logo-icon">🎼</span>
-                        <span class="logo-title">StaveEditor</span>
-                        <span class="logo-subtitle">Lit-based ABC Studio</span>
-                    </div>
-                </header>
+                <header-component
+                    .status="${this.status}"
+                    .isError="${this.isError}"
+                ></header-component>
 
                 <main class="app-main">
                     <div class="editor-area" style="${isDesktop ? `width: ${this.splitPercentage}%; flex: none;` : `height: ${this.splitPercentage}%; flex: none;`}">
@@ -299,11 +246,9 @@ K: G
                     </div>
                 </main>
 
-                <footer-component
-                    .status="${this.status}"
-                    .isError="${this.isError}"
-                    .abcCode="${this.abcCode}"
-                ></footer-component>
+                <playback-component
+                    .visualObj="${this.visualObj}"
+                ></playback-component>
             </div>
         `;
     }
