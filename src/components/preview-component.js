@@ -1,4 +1,4 @@
-import { LitElement, html, css } from 'lit';
+import { LitElement, html, css, unsafeCSS } from 'lit';
 
 export class PreviewComponent extends LitElement {
     static properties = {
@@ -10,6 +10,7 @@ export class PreviewComponent extends LitElement {
 
     static styles = css`
         :host {
+            container-type: inline-size;
             display: flex;
             flex-direction: column;
             width: 100%;
@@ -41,6 +42,7 @@ export class PreviewComponent extends LitElement {
         }
 
         .header-title {
+            flex: 1 1 0%;
             font-size: 0.9rem;
             font-weight: 600;
             color: var(--text-primary);
@@ -50,8 +52,8 @@ export class PreviewComponent extends LitElement {
             white-space: nowrap;
         }
 
-        /* Zoom Control Bar */
         .zoom-controls {
+            flex: 0 0 auto;
             display: flex;
             align-items: center;
             gap: 6px;
@@ -105,6 +107,10 @@ export class PreviewComponent extends LitElement {
             padding: 2px 6px;
             border-radius: 4px;
             transition: all var(--transition-fast);
+        }
+
+        .zoom-reset-btn .reset-icon {
+            display: none;
         }
 
         .zoom-reset-btn:hover {
@@ -222,8 +228,10 @@ export class PreviewComponent extends LitElement {
 
         /* Action Controls Group */
         .header-controls {
+            flex: 1 1 0%;
             display: flex;
             align-items: center;
+            justify-content: flex-end;
             gap: 8px;
         }
 
@@ -279,17 +287,74 @@ export class PreviewComponent extends LitElement {
 
             .preview-header {
                 padding: 8px 12px;
+                gap: 6px;
+            }
+        }
+
+        ${unsafeCSS(`
+        /* Container queries for dynamic splitter resizing sensitivity */
+        @container (max-width: 520px) {
+            .title-text {
+                display: none !important;
             }
 
             .btn-text {
-                display: none;
+                display: none !important;
             }
 
             .action-btn {
                 padding: 5px 8px;
                 font-size: 0.85rem;
             }
+
+            /* Compact zoom controls on mobile/narrow viewports */
+            .zoom-controls {
+                gap: 2px;
+                padding: 2px 4px;
+                border-radius: 6px;
+            }
+
+            .zoom-btn {
+                width: 20px;
+                height: 20px;
+                font-size: 0.7rem;
+            }
+
+            .zoom-value {
+                font-size: 0.65rem;
+                min-width: 28px;
+            }
+
+            .zoom-reset-btn {
+                font-size: 0.65rem;
+                padding: 1px 4px;
+            }
+
+            .zoom-reset-btn .reset-text {
+                display: none;
+            }
+
+            .zoom-reset-btn .reset-icon {
+                display: inline;
+                font-size: 0.75rem;
+            }
         }
+
+        @container (max-width: 380px) {
+            .preview-header {
+                padding: 6px 8px;
+                gap: 4px;
+            }
+
+            .header-controls {
+                gap: 4px;
+            }
+
+            .action-btn {
+                padding: 4px 6px;
+            }
+        }
+        `)}
 
         @keyframes pulse-slow {
             0%, 100% { opacity: 0.4; }
@@ -492,23 +557,26 @@ export class PreviewComponent extends LitElement {
             <div class="preview-container">
                 <div class="preview-header">
                     <div class="header-title">
-                        🎼 <span>Sheet Music Preview</span>
+                        🎶 <span class="title-text">Sheet Music Preview</span>
                     </div>
                     
+                    <div class="zoom-controls">
+                        <button class="zoom-btn" @click="${this.zoomOut}" ?disabled="${this.zoom <= 0.6}" title="Zoom Out">-</button>
+                        <span class="zoom-value">${paperWidthPercent}%</span>
+                        <button class="zoom-btn" @click="${this.zoomIn}" ?disabled="${this.zoom >= 1.5}" title="Zoom In">+</button>
+                        <button class="zoom-reset-btn" @click="${this.zoomReset}" ?disabled="${this.zoom === 1.0}" title="Reset Zoom">
+                            <span class="reset-text">Reset</span>
+                            <span class="reset-icon">↺</span>
+                        </button>
+                    </div>
+
                     <div class="header-controls">
-                        <button class="action-btn primary" @click="${this.handleExportSVG}" title="Download Sheet Music as Vector SVG">
+                        <button class="action-btn" @click="${this.handleExportSVG}" title="Download Sheet Music as Vector SVG">
                             📥 <span class="btn-text">SVG Stave</span>
                         </button>
                         <button class="action-btn" @click="${this.handleCopySVG}" title="Copy Raw SVG XML Code to Clipboard">
                             📋 <span class="btn-text">Copy SVG</span>
                         </button>
-                    </div>
-
-                    <div class="zoom-controls">
-                        <button class="zoom-btn" @click="${this.zoomOut}" ?disabled="${this.zoom <= 0.6}" title="Zoom Out">-</button>
-                        <span class="zoom-value">${paperWidthPercent}%</span>
-                        <button class="zoom-btn" @click="${this.zoomIn}" ?disabled="${this.zoom >= 1.5}" title="Zoom In">+</button>
-                        <button class="zoom-reset-btn" @click="${this.zoomReset}" ?disabled="${this.zoom === 1.0}" title="Reset Zoom">Reset</button>
                     </div>
                 </div>
 

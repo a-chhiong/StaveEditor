@@ -28,11 +28,13 @@ const minifyLitTemplatesPlugin = {
             if (args.path.includes('node_modules')) {
                 return;
             }
-
             const text = await fs.promises.readFile(args.path, 'utf8');
             try {
                 const result = minifyHTMLLiterals(text, {
-                    fileName: args.path
+                    fileName: args.path,
+                    shouldMinify: (type) => {
+                        return type.tag === 'html';
+                    }
                 });
                 
                 if (result && result.code) {
@@ -65,7 +67,7 @@ async function build() {
             minify: true,
             sourcemap: false,
             format: 'esm',
-            target: ['es2020'],
+            target: ['esnext'],
             outfile: path.join(distDir, 'bundle.js'),
             external: ['lit', 'lit/*'],
             plugins: [minifyLitTemplatesPlugin],
@@ -87,12 +89,13 @@ async function build() {
         const htmlPath = path.join(srcDir, 'index.html');
         let htmlContent = await fs.promises.readFile(htmlPath, 'utf8');
 
+        const version = Date.now();
         // Rewire references:
         // href="style.css" or href="./style.css" -> href="bundle.css"
-        htmlContent = htmlContent.replace(/(href=)["'](?:\.\/)?style\.css["']/g, '$1"bundle.css"');
+        htmlContent = htmlContent.replace(/(href=)["'](?:\.\/)?style\.css["']/g, `$1"bundle.css?v=${version}"`);
         
         // src="script.js" or src="./script.js" -> src="bundle.js"
-        htmlContent = htmlContent.replace(/(src=)["'](?:\.\/)?script\.js["']/g, '$1"bundle.js"');
+        htmlContent = htmlContent.replace(/(src=)["'](?:\.\/)?script\.js["']/g, `$1"bundle.js?v=${version}"`);
 
         // Minify HTML content
         const minifiedHtml = await minify(htmlContent, {

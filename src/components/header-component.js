@@ -122,6 +122,10 @@ export class HeaderComponent extends LitElement {
             animation: pulse-glow-emerald 2s infinite ease-in-out;
         }
 
+        .autosave-text-short {
+            display: none;
+        }
+
         .share-btn {
             display: flex;
             align-items: center;
@@ -160,17 +164,78 @@ export class HeaderComponent extends LitElement {
         }
 
         @media (max-width: 768px) {
+            .header-container {
+                padding: 0 8px;
+                height: 48px;
+            }
+
             .logo-subtitle {
                 display: none;
             }
 
+            .logo-area {
+                gap: 6px;
+            }
+
+            .logo-icon {
+                font-size: 1.1rem;
+            }
+
+            .logo-title {
+                font-size: 0.95rem;
+            }
+
+            .status-area {
+                gap: 6px;
+            }
+
+            .status-badge {
+                font-size: 0.62rem;
+                padding: 2px 6px;
+            }
+
             .status-text {
-                display: none; /* Hide status text on small viewports to save space */
+                font-size: 0.65rem;
+                max-width: 90px;
+                margin-left: 2px;
             }
 
             .autosave-badge {
-                padding: 4px 8px;
-                font-size: 0.68rem;
+                padding: 3px 6px;
+                font-size: 0.65rem;
+                margin-left: 2px;
+                gap: 4px;
+            }
+
+            .autosave-pulse {
+                width: 4px;
+                height: 4px;
+            }
+
+            .autosave-text-full {
+                display: none;
+            }
+
+            .autosave-text-short {
+                display: inline;
+            }
+
+            .share-btn {
+                padding: 4px 10px;
+                font-size: 0.7rem;
+                margin-left: 2px;
+                gap: 4px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .status-text {
+                display: none;
+            }
+            .autosave-badge {
+                padding: 2px 4px;
+                font-size: 0.6rem;
+                gap: 2px;
             }
         }
     `;
@@ -220,7 +285,8 @@ export class HeaderComponent extends LitElement {
                     
                     <span class="autosave-badge" title="Automatically backed up to local storage regularly">
                         <span class="autosave-pulse"></span>
-                        Autosave Active
+                        <span class="autosave-text-full">Autosave Active</span>
+                        <span class="autosave-text-short">Autosave</span>
                     </span>
                     
                     <button class="share-btn" @click="${this.handleShare}" title="Copy link to this composition">

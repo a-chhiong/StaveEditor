@@ -1,4 +1,4 @@
-import { LitElement, html, css } from 'lit';
+import { LitElement, html, css, unsafeCSS } from 'lit';
 
 export class EditorComponent extends LitElement {
     static properties = {
@@ -8,6 +8,7 @@ export class EditorComponent extends LitElement {
 
     static styles = css`
         :host {
+            container-type: inline-size;
             display: flex;
             flex-direction: column;
             width: 100%;
@@ -198,19 +199,6 @@ export class EditorComponent extends LitElement {
                 padding: 6px 10px;
             }
 
-            .header-title span {
-                display: none;
-            }
-
-            .btn-text {
-                display: none;
-            }
-
-            .action-btn {
-                padding: 5px 8px;
-                gap: 0;
-            }
-
             .editor-input {
                 font-size: 0.8rem;
                 padding: 12px;
@@ -235,6 +223,39 @@ export class EditorComponent extends LitElement {
                 font-size: 0.75rem;
             }
         }
+
+        ${unsafeCSS(`
+        /* Container queries for dynamic splitter resizing sensitivity */
+        @container (max-width: 520px) {
+            .title-text {
+                display: none !important;
+            }
+
+            .btn-text {
+                display: none !important;
+            }
+
+            .action-btn {
+                padding: 5px 8px;
+                gap: 0;
+            }
+        }
+
+        @container (max-width: 380px) {
+            .editor-header {
+                padding: 6px 8px;
+                gap: 6px;
+            }
+
+            .header-controls {
+                gap: 4px;
+            }
+
+            .action-btn {
+                padding: 4px 6px;
+            }
+        }
+        `)}
     `;
 
     constructor() {
@@ -347,7 +368,7 @@ export class EditorComponent extends LitElement {
             <div class="editor-container">
                 <div class="editor-header">
                     <div class="header-title">
-                        ✏️ <span>ABC Editor</span>
+                        ✏️ <span class="title-text">ABC Editor</span>
                     </div>
                     <div class="header-controls">
                         <button class="action-btn" @click="${this.toggleToolbar}" title="Toggle Insert Toolbar">
