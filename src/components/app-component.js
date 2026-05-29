@@ -1,4 +1,5 @@
 import { LitElement, html, css } from 'lit';
+import LZString from 'lz-string';
 
 export class AppComponent extends LitElement {
     static properties = {
@@ -187,9 +188,9 @@ export class AppComponent extends LitElement {
     _loadFromUrl() {
         const params = new URLSearchParams(window.location.search);
         const encoded = params.get('abc');
-        if (encoded && window.LZString) {
+        if (encoded && LZString) {
             try {
-                const decoded = window.LZString.decompressFromEncodedURIComponent(encoded);
+                const decoded = LZString.decompressFromEncodedURIComponent(encoded);
                 if (decoded) return decoded;
             } catch (e) {
                 console.error("Failed to parse ABC from URL", e);
@@ -219,8 +220,8 @@ K: G
         this.abcCode = e.detail;
         localStorage.setItem('abcNotation', this.abcCode);
         
-        if (window.LZString) {
-            const compressed = window.LZString.compressToEncodedURIComponent(this.abcCode);
+        if (LZString) {
+            const compressed = LZString.compressToEncodedURIComponent(this.abcCode);
             const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?abc=' + compressed;
             window.history.replaceState({ path: newUrl }, '', newUrl);
         }
@@ -243,6 +244,7 @@ K: G
                 <header-component
                     .status="${this.status}"
                     .isError="${this.isError}"
+                    .abcCode="${this.abcCode}"
                 ></header-component>
 
                 <main class="app-main">

@@ -1,4 +1,5 @@
 import { LitElement, html, css, unsafeCSS } from 'lit';
+import ABCJS from 'abcjs';
 
 export class PreviewComponent extends LitElement {
     static properties = {

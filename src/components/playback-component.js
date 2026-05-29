@@ -1,4 +1,5 @@
 import { LitElement, html, css } from 'lit';
+import ABCJS from 'abcjs';
 
 export class PlaybackComponent extends LitElement {
     static properties = {

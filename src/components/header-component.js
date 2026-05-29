@@ -1,9 +1,11 @@
 import { LitElement, html, css } from 'lit';
+import LZString from 'lz-string';
 
 export class HeaderComponent extends LitElement {
     static properties = {
         status: { type: String },
-        isError: { type: Boolean }
+        isError: { type: Boolean },
+        abcCode: { type: String }
     };
 
     static styles = css`
@@ -247,9 +249,33 @@ export class HeaderComponent extends LitElement {
         this.shareText = 'Share';
     }
 
+    async copyTextToClipboard(text) {
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(text);
+        } else {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            const success = document.execCommand('copy');
+            document.body.removeChild(textarea);
+            if (!success) {
+                throw new Error('execCommand copy failed');
+            }
+        }
+    }
+
     async handleShare() {
         try {
-            await navigator.clipboard.writeText(window.location.href);
+            let shareUrl = window.location.href;
+            if (LZString && this.abcCode) {
+                const compressed = LZString.compressToEncodedURIComponent(this.abcCode);
+                shareUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?abc=' + compressed;
+                window.history.replaceState({ path: shareUrl }, '', shareUrl);
+            }
+            await this.copyTextToClipboard(shareUrl);
             this.shareText = 'Copied!';
             this.requestUpdate();
             setTimeout(() => {
