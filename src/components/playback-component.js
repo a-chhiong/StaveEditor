@@ -11,8 +11,8 @@ export class PlaybackComponent extends LitElement {
         :host {
             display: block;
             width: 100%;
-            height: 52px;
-            background: rgba(15, 23, 42, 0.65);
+            height: 56px; /* slightly taller to fit larger buttons */
+            background: var(--bg-glass);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
             border-top: 1px solid var(--border-color);
@@ -46,24 +46,24 @@ export class PlaybackComponent extends LitElement {
             flex-shrink: 0;
         }
 
-        /* Control Buttons */
+        /* Control Buttons - enlarged for mobile and premium desktop view */
         .control-btn {
             background: transparent;
             border: none;
             color: var(--text-primary);
             cursor: pointer;
-            width: 26px;
-            height: 26px;
+            width: 36px;
+            height: 36px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 0.85rem;
+            font-size: 1.1rem;
             transition: all var(--transition-fast);
         }
 
         .control-btn:hover:not(:disabled) {
-            background: rgba(255, 255, 255, 0.1);
+            background: var(--bg-glass-active);
             color: var(--accent-violet);
             transform: scale(1.08);
         }
@@ -80,7 +80,7 @@ export class PlaybackComponent extends LitElement {
         .control-btn.play-btn {
             background: linear-gradient(135deg, var(--accent-indigo) 0%, var(--accent-violet) 100%);
             box-shadow: 0 2px 8px rgba(139, 92, 246, 0.3);
-            font-size: 0.75rem;
+            font-size: 0.95rem;
         }
 
         .control-btn.play-btn:hover:not(:disabled) {
@@ -123,9 +123,9 @@ export class PlaybackComponent extends LitElement {
         .progress-slider {
             -webkit-appearance: none;
             width: 100%;
-            height: 4px;
+            height: 6px; /* slightly thicker */
             border-radius: 99px;
-            background: rgba(255, 255, 255, 0.1);
+            background: var(--midi-progress-bg);
             outline: none;
             cursor: pointer;
             transition: all var(--transition-fast);
@@ -133,19 +133,19 @@ export class PlaybackComponent extends LitElement {
 
         .progress-slider::-webkit-slider-runnable-track {
             width: 100%;
-            height: 4px;
+            height: 6px;
             background: transparent;
         }
 
         .progress-slider::-webkit-slider-thumb {
             -webkit-appearance: none;
-            width: 10px;
-            height: 10px;
+            width: 14px; /* enlarged thumb */
+            height: 14px; /* enlarged thumb */
             border-radius: 50%;
             background: var(--accent-violet);
             box-shadow: 0 0 8px var(--accent-violet);
             transition: all var(--transition-fast);
-            margin-top: -3px; /* Center thumb on track */
+            margin-top: -4px; /* Center thumb on track */
         }
 
         .progress-slider:hover::-webkit-slider-thumb {
@@ -156,9 +156,9 @@ export class PlaybackComponent extends LitElement {
 
         /* Buffering / Loading State */
         .buffering-spinner {
-            width: 14px;
-            height: 14px;
-            border: 2px solid rgba(255, 255, 255, 0.1);
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--border-color);
             border-top-color: var(--accent-violet);
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
@@ -178,13 +178,13 @@ export class PlaybackComponent extends LitElement {
         }
 
         .speed-select {
-            background: rgba(30, 41, 59, 0.6);
+            background: var(--midi-btn-bg);
             border: 1px solid var(--border-color);
             color: var(--text-primary);
             font-family: var(--font-ui);
-            font-size: 0.72rem;
+            font-size: 0.8rem;
             font-weight: 600;
-            padding: 4px 20px 4px 8px;
+            padding: 6px 22px 6px 10px;
             border-radius: 6px;
             cursor: pointer;
             transition: all var(--transition-fast);
@@ -207,21 +207,21 @@ export class PlaybackComponent extends LitElement {
         }
 
         .speed-select option {
-            background: #1e293b;
+            background: var(--bg-secondary);
             color: var(--text-primary);
         }
 
         @media (max-width: 480px) {
             .player-container {
-                gap: 6px;
-                padding: 4px 10px;
+                gap: 8px;
+                padding: 4px 12px;
             }
             .time-display {
-                font-size: 0.7rem;
+                font-size: 0.75rem;
             }
             .speed-select {
-                font-size: 0.65rem;
-                padding: 3px 16px 3px 6px;
+                font-size: 0.75rem;
+                padding: 4px 18px 4px 8px;
                 background-position: right 4px center;
                 background-size: 8px;
             }
@@ -389,6 +389,14 @@ export class PlaybackComponent extends LitElement {
     }
 
     clearHighlighting() {
+        const root = this.getRootNode();
+        if (root && root.querySelectorAll) {
+            const playingNotes = root.querySelectorAll('.abcjs-note-playing');
+            playingNotes.forEach(el => el.classList.remove('abcjs-note-playing'));
+            return;
+        }
+        
+        // Fallback:
         const app = document.querySelector('abc-app');
         if (!app) return;
         const preview = app.shadowRoot.querySelector('preview-component');

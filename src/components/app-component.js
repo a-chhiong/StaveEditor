@@ -6,7 +6,6 @@ export class AppComponent extends LitElement {
         abcCode: { type: String },
         status: { type: String },
         isError: { type: Boolean },
-        visualObj: { type: Object },
         splitPercentage: { type: Number },
         isDragging: { type: Boolean }
     };
@@ -24,7 +23,7 @@ export class AppComponent extends LitElement {
             width: 100%;
             height: 100vh;
             height: 100dvh;
-            background: radial-gradient(circle at 10% 20%, #1e1b4b 0%, #0f172a 90%);
+            background: var(--bg-app-gradient);
             overflow: hidden;
         }
 
@@ -43,7 +42,8 @@ export class AppComponent extends LitElement {
             min-height: 0;
             display: flex;
             flex-direction: column;
-            background: rgba(15, 23, 42, 0.25);
+            background: var(--bg-glass);
+            border-right: 1px solid var(--border-color);
         }
 
         .preview-area {
@@ -51,12 +51,13 @@ export class AppComponent extends LitElement {
             min-height: 0;
             display: flex;
             flex-direction: column;
-            background: rgba(11, 15, 25, 0.4);
+            background: var(--bg-glass);
+            border-left: 1px solid var(--border-color);
         }
 
         /* Sleek Splitter drag bar */
         .app-splitter {
-            background: rgba(255, 255, 255, 0.08);
+            background: var(--border-color);
             position: relative;
             flex-shrink: 0;
             z-index: 5;
@@ -115,7 +116,6 @@ export class AppComponent extends LitElement {
         this.abcCode = this._loadFromUrl() || this._loadFromStorage() || this._getDefaultABC();
         this.status = 'Ready';
         this.isError = false;
-        this.visualObj = null;
         this.splitPercentage = 50; // default 50/50 split
         this.isDragging = false;
     }
@@ -232,10 +232,6 @@ K: G
         this.isError = e.detail.isError;
     }
 
-    handleRenderCompleted(e) {
-        this.visualObj = e.detail.visualObj;
-    }
-
     render() {
         const isDesktop = window.innerWidth > 1024;
         
@@ -263,14 +259,9 @@ K: G
                         <preview-component
                             .abcCode="${this.abcCode}"
                             @status-changed="${this.handleStatusChanged.bind(this)}"
-                            @render-completed="${this.handleRenderCompleted.bind(this)}"
                         ></preview-component>
                     </div>
                 </main>
-
-                <playback-component
-                    .visualObj="${this.visualObj}"
-                ></playback-component>
             </div>
         `;
     }

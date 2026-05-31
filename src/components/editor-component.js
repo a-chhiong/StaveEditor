@@ -2,8 +2,7 @@ import { LitElement, html, css, unsafeCSS } from 'lit';
 
 export class EditorComponent extends LitElement {
     static properties = {
-        abcCode: { type: String },
-        isToolbarExpanded: { type: Boolean }
+        abcCode: { type: String }
     };
 
     static styles = css`
@@ -22,7 +21,7 @@ export class EditorComponent extends LitElement {
             flex: 1;
             min-height: 0;
             overflow: hidden;
-            background: rgba(15, 23, 42, 0.45);
+            background: var(--bg-glass);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
         }
@@ -32,8 +31,9 @@ export class EditorComponent extends LitElement {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 10px 16px;
-            background: rgba(22, 30, 49, 0.7);
+            height: 56px;
+            padding: 0 16px;
+            background: var(--bg-panel-header);
             border-bottom: 1px solid var(--border-color);
             flex-shrink: 0;
             gap: 12px;
@@ -57,13 +57,13 @@ export class EditorComponent extends LitElement {
 
         /* Action Buttons */
         .action-btn {
-            background: rgba(255, 255, 255, 0.05);
+            background: var(--midi-btn-bg);
             border: 1px solid var(--border-color);
             color: var(--text-secondary);
             font-family: var(--font-ui);
-            font-size: 0.78rem;
+            font-size: 0.82rem;
             font-weight: 600;
-            padding: 5px 10px;
+            padding: 8px 12px;
             border-radius: 6px;
             cursor: pointer;
             transition: all var(--transition-fast);
@@ -127,51 +127,61 @@ export class EditorComponent extends LitElement {
         /* Custom Keyboard Helper Toolbar */
         .quick-toolbar {
             display: flex;
-            flex-wrap: wrap; /* RWD Wrapping! */
+            flex-wrap: nowrap; /* Do not wrap! */
             align-items: center;
             gap: 8px;
-            padding: 8px 12px;
-            background: rgba(15, 23, 42, 0.9);
+            padding: 10px 16px;
+            background: var(--bg-toolbar);
             border-top: 1px solid var(--border-color);
             flex-shrink: 0;
+            overflow-x: auto; /* Horizontally scrollable if screen width not enough */
+            width: 100%;
+            scrollbar-width: thin;
         }
 
-        .quick-toolbar.collapsed {
-            display: none;
+        .quick-toolbar::-webkit-scrollbar {
+            height: 4px;
+        }
+
+        .quick-toolbar::-webkit-scrollbar-thumb {
+            background: var(--scroll-thumb);
+            border-radius: 2px;
         }
 
         .toolbar-group {
             display: flex;
             align-items: center;
             gap: 4px;
-            flex-wrap: wrap;
+            flex-wrap: nowrap; /* Keep items in a line */
         }
 
         .toolbar-group-label {
-            font-size: 0.65rem;
+            font-size: 0.7rem;
             font-weight: 600;
             text-transform: uppercase;
             color: var(--text-muted);
             margin-right: 6px;
             letter-spacing: 0.05em;
+            flex-shrink: 0;
         }
 
         .toolbar-btn {
-            background: rgba(255, 255, 255, 0.04);
+            background: var(--midi-btn-bg);
             border: 1px solid var(--border-color);
             color: var(--text-primary);
             font-family: var(--font-code);
-            font-size: 0.8rem;
+            font-size: 0.85rem;
             font-weight: 600;
-            min-width: 32px;
-            height: 32px;
+            min-width: 36px;
+            height: 36px;
             border-radius: 6px;
             cursor: pointer;
             display: inline-flex;
             align-items: center;
             justify-content: center;
             transition: all var(--transition-fast);
-            padding: 0 8px;
+            padding: 0 10px;
+            flex-shrink: 0;
         }
 
         .toolbar-btn:hover {
@@ -196,7 +206,8 @@ export class EditorComponent extends LitElement {
 
         @media (max-width: 768px) {
             .editor-header {
-                padding: 6px 10px;
+                height: 48px;
+                padding: 0 10px;
             }
 
             .editor-input {
@@ -206,21 +217,22 @@ export class EditorComponent extends LitElement {
 
             .quick-toolbar {
                 gap: 6px;
-                padding: 6px 10px;
+                padding: 8px 12px;
             }
 
             .toolbar-group {
                 gap: 3px;
+                flex-wrap: nowrap;
             }
 
             .toolbar-divider {
-                display: none; /* Hide dividers when items wrap to stack cleanly */
+                display: block; /* Keep dividers visible in horizontal scroll */
             }
 
             .toolbar-btn {
-                min-width: 28px;
-                height: 28px;
-                font-size: 0.75rem;
+                min-width: 34px;
+                height: 34px;
+                font-size: 0.8rem;
             }
         }
 
@@ -243,7 +255,8 @@ export class EditorComponent extends LitElement {
 
         @container (max-width: 380px) {
             .editor-header {
-                padding: 6px 8px;
+                height: 44px;
+                padding: 0 8px;
                 gap: 6px;
             }
 
@@ -261,11 +274,6 @@ export class EditorComponent extends LitElement {
     constructor() {
         super();
         this.abcCode = '';
-        this.isToolbarExpanded = false;
-    }
-
-    toggleToolbar() {
-        this.isToolbarExpanded = !this.isToolbarExpanded;
     }
 
     handleInput(e) {
@@ -371,16 +379,13 @@ export class EditorComponent extends LitElement {
                         ✏️ <span class="title-text">ABC Editor</span>
                     </div>
                     <div class="header-controls">
-                        <button class="action-btn" @click="${this.toggleToolbar}" title="Toggle Insert Toolbar">
-                            ${this.isToolbarExpanded ? '🔽' : '▶️'} <span class="btn-text">Insert</span>
-                        </button>
                         <input type="file" id="abc-file-input" accept=".abc,.txt" style="display: none;" @change="${this.handleLoadABCFile}">
                         
                         <button class="action-btn" @click="${this.triggerFileInput}" title="Load .abc notation file from your device">
-                            📂 <span class="btn-text">Load ABC</span>
+                            📂 <span class="btn-text">Load</span>
                         </button>
                         <button class="action-btn" @click="${this.handleSaveABCFile}" title="Save current composition as a raw .abc file">
-                            💾 <span class="btn-text">Save ABC</span>
+                            💾 <span class="btn-text">Save</span>
                         </button>
                         <button class="action-btn danger" @click="${this.handleClear}" title="Clear all text">
                             🗑️ <span class="btn-text">Clear</span>
@@ -398,7 +403,7 @@ export class EditorComponent extends LitElement {
                     ></textarea>
                 </div>
 
-                <div class="quick-toolbar ${this.isToolbarExpanded ? '' : 'collapsed'}">
+                <div class="quick-toolbar">
                     <div class="toolbar-group">
                         <span class="toolbar-group-label">Insert:</span>
                         <button class="toolbar-btn" @click="${() => this.insertSymbol('|')}" title="Barline">|</button>

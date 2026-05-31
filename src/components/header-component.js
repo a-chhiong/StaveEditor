@@ -6,7 +6,9 @@ export class HeaderComponent extends LitElement {
         status: { type: String },
         isError: { type: Boolean },
         abcCode: { type: String },
-        isFullscreen: { type: Boolean }
+        isFullscreen: { type: Boolean },
+        currentTheme: { type: String },
+        shareSuccess: { type: Boolean }
     };
 
     static styles = css`
@@ -21,7 +23,7 @@ export class HeaderComponent extends LitElement {
             justify-content: space-between;
             height: 56px;
             padding: 0 20px;
-            background: rgba(15, 23, 42, 0.6);
+            background: var(--bg-glass);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             border-bottom: 1px solid var(--border-color);
@@ -52,7 +54,7 @@ export class HeaderComponent extends LitElement {
             font-size: 0.75rem;
             color: var(--text-muted);
             font-weight: 500;
-            border-left: 1px solid rgba(255, 255, 255, 0.15);
+            border-left: 1px solid var(--border-color);
             padding-left: 10px;
             margin-left: 2px;
             display: inline-block;
@@ -100,59 +102,34 @@ export class HeaderComponent extends LitElement {
             white-space: nowrap;
         }
 
-        .fullscreen-btn {
+        .header-btn {
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 28px;
-            height: 28px;
-            font-size: 0.85rem;
+            width: 42px;
+            height: 42px;
+            font-size: 1.1rem;
             color: var(--text-secondary);
-            background: rgba(255, 255, 255, 0.05);
+            background: var(--midi-btn-bg);
             border: 1px solid var(--border-color);
-            border-radius: 6px;
+            border-radius: 8px;
             margin-left: 8px;
             cursor: pointer;
             transition: all var(--transition-fast);
             outline: none;
+            padding: 0;
+            flex-shrink: 0;
         }
 
-        .fullscreen-btn:hover {
+        .header-btn:hover {
             background: var(--bg-glass-active);
             border-color: var(--accent-violet);
             color: var(--text-primary);
             transform: scale(1.05);
         }
 
-        .fullscreen-btn:active {
+        .header-btn:active {
             transform: scale(0.95);
-        }
-
-        .share-btn {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            background: linear-gradient(135deg, var(--accent-indigo) 0%, var(--accent-violet) 100%);
-            border: none;
-            padding: 5px 12px;
-            border-radius: 6px;
-            margin-left: 8px;
-            cursor: pointer;
-            transition: all var(--transition-fast);
-            box-shadow: 0 2px 8px rgba(139, 92, 246, 0.25);
-        }
-
-        .share-btn:hover {
-            background: linear-gradient(135deg, var(--accent-indigo) 20%, var(--accent-violet) 100%);
-            box-shadow: 0 2px 12px rgba(139, 92, 246, 0.4);
-            transform: translateY(-1px);
-        }
-
-        .share-btn:active {
-            transform: translateY(0);
         }
 
         @keyframes pulse-glow-logo {
@@ -198,17 +175,11 @@ export class HeaderComponent extends LitElement {
                 margin-left: 2px;
             }
 
-            .fullscreen-btn {
-                width: 24px;
-                height: 24px;
+            .header-btn {
+                width: 38px;
+                height: 38px;
+                font-size: 1rem;
                 margin-left: 4px;
-            }
-
-            .share-btn {
-                padding: 4px 10px;
-                font-size: 0.7rem;
-                margin-left: 2px;
-                gap: 4px;
             }
         }
 
@@ -224,8 +195,9 @@ export class HeaderComponent extends LitElement {
         super();
         this.status = 'Ready';
         this.isError = false;
-        this.shareText = 'Share';
         this.isFullscreen = false;
+        this.shareSuccess = false;
+        this.currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
     }
 
     connectedCallback() {
@@ -269,6 +241,13 @@ export class HeaderComponent extends LitElement {
         }
     }
 
+    toggleTheme() {
+        const newTheme = this.currentTheme === 'light' ? 'dark' : 'light';
+        document.documentElement.setAttribute('data-theme', newTheme);
+        localStorage.setItem('staveEditorTheme', newTheme);
+        this.currentTheme = newTheme;
+    }
+
     async handleShare() {
         try {
             let shareUrl = window.location.href;
@@ -278,20 +257,12 @@ export class HeaderComponent extends LitElement {
                 window.history.replaceState({ path: shareUrl }, '', shareUrl);
             }
             await this.copyTextToClipboard(shareUrl);
-            this.shareText = 'Copied!';
-            this.requestUpdate();
+            this.shareSuccess = true;
             setTimeout(() => {
-                this.shareText = 'Share';
-                this.requestUpdate();
+                this.shareSuccess = false;
             }, 2000);
         } catch (err) {
             console.error('Failed to copy URL:', err);
-            this.shareText = 'Failed';
-            this.requestUpdate();
-            setTimeout(() => {
-                this.shareText = 'Share';
-                this.requestUpdate();
-            }, 2000);
         }
     }
 
@@ -304,28 +275,32 @@ export class HeaderComponent extends LitElement {
                 <div class="logo-area">
                     <span class="logo-icon">🎼</span>
                     <span class="logo-title">StaveEditor</span>
-                    <span class="logo-subtitle">Lit-based ABC Studio</span>
+                    <span class="logo-subtitle">ABC Studio</span>
                 </div>
 
                 <div class="status-area">
                     <span class="${badgeClass}">${badgeText}</span>
                     <span class="status-text">${this.status}</span>
                     
-                    <button class="share-btn" @click="${this.handleShare}" title="Copy link to this composition">
-                        🔗 <span>${this.shareText}</span>
+                    <button class="header-btn" @click="${this.handleShare}" title="Copy shareable link to clipboard">
+                        ${this.shareSuccess ? '✅' : '🔗'}
                     </button>
 
-                    <button class="fullscreen-btn" @click="${this.toggleFullscreen}" title="Toggle fullscreen mode">
+                    <button class="header-btn" @click="${this.toggleFullscreen}" title="Toggle fullscreen mode">
                         ${this.isFullscreen
                             ? html`
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;">
                                   <path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7" stroke-linecap="round" stroke-linejoin="round"/>
                               </svg>`
                             : html`
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;">
                                   <path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3" stroke-linecap="round" stroke-linejoin="round"/>
                               </svg>`
                         }
+                    </button>
+                    
+                    <button class="header-btn" @click="${this.toggleTheme}" title="Toggle between light and dark themes">
+                        ${this.currentTheme === 'light' ? '🌙' : '☀️'}
                     </button>
                 </div>
             </div>

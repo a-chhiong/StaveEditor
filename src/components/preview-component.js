@@ -25,7 +25,7 @@ export class PreviewComponent extends LitElement {
             flex: 1;
             min-height: 0;
             overflow: hidden;
-            background: rgba(11, 15, 25, 0.4);
+            background: var(--bg-glass);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
         }
@@ -35,8 +35,9 @@ export class PreviewComponent extends LitElement {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 10px 16px;
-            background: rgba(22, 30, 49, 0.7);
+            height: 56px;
+            padding: 0 16px;
+            background: var(--bg-panel-header);
             border-bottom: 1px solid var(--border-color);
             flex-shrink: 0;
             gap: 12px;
@@ -57,35 +58,42 @@ export class PreviewComponent extends LitElement {
             flex: 0 0 auto;
             display: flex;
             align-items: center;
-            gap: 6px;
-            background: rgba(0, 0, 0, 0.2);
+            gap: 4px;
+            background: var(--bg-zoom-controls);
             padding: 3px 6px;
             border-radius: 8px;
             border: 1px solid var(--border-color);
         }
 
-        .zoom-btn {
+        .zoom-btn, .zoom-reset-btn {
             background: transparent;
             border: none;
             color: var(--text-secondary);
             font-size: 0.85rem;
             cursor: pointer;
-            width: 24px;
-            height: 24px;
-            border-radius: 4px;
+            width: 26px;
+            height: 26px;
+            border-radius: 6px;
             display: flex;
             align-items: center;
             justify-content: center;
             transition: all var(--transition-fast);
         }
 
-        .zoom-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
+        .zoom-btn:hover, .zoom-reset-btn:hover {
+            background: var(--bg-glass-active);
             color: var(--text-primary);
         }
 
-        .zoom-btn:active {
+        .zoom-btn:active, .zoom-reset-btn:active {
             transform: scale(0.9);
+        }
+
+        .zoom-btn:disabled, .zoom-reset-btn:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+            background: transparent !important;
+            transform: none !important;
         }
 
         .zoom-value {
@@ -93,31 +101,12 @@ export class PreviewComponent extends LitElement {
             font-size: 0.75rem;
             font-weight: 600;
             color: var(--text-primary);
-            min-width: 36px;
+            min-width: 34px;
             text-align: center;
             user-select: none;
         }
 
-        .zoom-reset-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            font-size: 0.7rem;
-            font-weight: 500;
-            cursor: pointer;
-            padding: 2px 6px;
-            border-radius: 4px;
-            transition: all var(--transition-fast);
-        }
 
-        .zoom-reset-btn .reset-icon {
-            display: none;
-        }
-
-        .zoom-reset-btn:hover {
-            color: var(--text-primary);
-            background: rgba(255, 255, 255, 0.05);
-        }
 
         /* Scrollable Canvas Viewport */
         .preview-canvas {
@@ -178,14 +167,14 @@ export class PreviewComponent extends LitElement {
 
         /* Warnings & Errors Panel */
         .warnings-panel {
-            background: rgba(244, 63, 94, 0.08);
-            border: 1px solid rgba(244, 63, 94, 0.2);
+            background: var(--warning-bg);
+            border: 1px solid var(--warning-border);
             border-radius: 10px;
             padding: 12px 16px;
             margin-top: 12px;
             width: 100%;
             max-width: 800px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             backdrop-filter: blur(8px);
             -webkit-backdrop-filter: blur(8px);
             flex-shrink: 0;
@@ -213,10 +202,10 @@ export class PreviewComponent extends LitElement {
         .warning-item {
             font-family: var(--font-code);
             font-size: 0.75rem;
-            color: #fda4af;
+            color: var(--warning-text);
             line-height: 1.4;
             padding: 4px 8px;
-            background: rgba(0, 0, 0, 0.2);
+            background: var(--warning-item-bg);
             border-radius: 4px;
             border-left: 3px solid var(--accent-rose);
         }
@@ -242,13 +231,13 @@ export class PreviewComponent extends LitElement {
             align-items: center;
             justify-content: center;
             gap: 6px;
-            background: rgba(255, 255, 255, 0.05);
+            background: var(--midi-btn-bg);
             border: 1px solid var(--border-color);
             color: var(--text-primary);
             font-family: var(--font-ui);
-            font-size: 0.75rem;
+            font-size: 0.82rem;
             font-weight: 600;
-            padding: 5px 12px;
+            padding: 8px 14px;
             border-radius: 6px;
             cursor: pointer;
             transition: all var(--transition-fast);
@@ -257,8 +246,8 @@ export class PreviewComponent extends LitElement {
         }
 
         .action-btn:hover {
-            background: rgba(255, 255, 255, 0.1);
-            border-color: rgba(255, 255, 255, 0.15);
+            background: var(--bg-glass-active);
+            border-color: var(--border-hover);
             transform: translateY(-1px);
         }
 
@@ -287,7 +276,8 @@ export class PreviewComponent extends LitElement {
             }
 
             .preview-header {
-                padding: 8px 12px;
+                height: 48px;
+                padding: 0 10px;
                 gap: 6px;
             }
         }
@@ -304,46 +294,33 @@ export class PreviewComponent extends LitElement {
             }
 
             .action-btn {
-                padding: 5px 8px;
-                font-size: 0.85rem;
+                padding: 8px 10px;
+                font-size: 0.8rem;
             }
 
-            /* Compact zoom controls on mobile/narrow viewports */
+            /* Compact zoom controls on mobile/narrow viewports - touch friendly! */
             .zoom-controls {
-                gap: 2px;
-                padding: 2px 4px;
-                border-radius: 6px;
+                gap: 4px;
+                padding: 3px 6px;
+                border-radius: 8px;
             }
 
-            .zoom-btn {
-                width: 20px;
-                height: 20px;
-                font-size: 0.7rem;
+            .zoom-btn, .zoom-reset-btn {
+                width: 24px;
+                height: 24px;
+                font-size: 0.8rem;
             }
 
             .zoom-value {
-                font-size: 0.65rem;
+                font-size: 0.7rem;
                 min-width: 28px;
-            }
-
-            .zoom-reset-btn {
-                font-size: 0.65rem;
-                padding: 1px 4px;
-            }
-
-            .zoom-reset-btn .reset-text {
-                display: none;
-            }
-
-            .zoom-reset-btn .reset-icon {
-                display: inline;
-                font-size: 0.75rem;
             }
         }
 
         @container (max-width: 380px) {
             .preview-header {
-                padding: 6px 8px;
+                height: 44px;
+                padding: 0 8px;
                 gap: 4px;
             }
 
@@ -352,7 +329,8 @@ export class PreviewComponent extends LitElement {
             }
 
             .action-btn {
-                padding: 4px 6px;
+                padding: 6px 8px;
+                font-size: 0.75rem;
             }
         }
         `)}
@@ -558,7 +536,7 @@ export class PreviewComponent extends LitElement {
             <div class="preview-container">
                 <div class="preview-header">
                     <div class="header-title">
-                        🎶 <span class="title-text">Sheet Music Preview</span>
+                        🎶 <span class="title-text">Sheet Preview</span>
                     </div>
                     
                     <div class="zoom-controls">
@@ -566,17 +544,16 @@ export class PreviewComponent extends LitElement {
                         <span class="zoom-value">${paperWidthPercent}%</span>
                         <button class="zoom-btn" @click="${this.zoomIn}" ?disabled="${this.zoom >= 1.5}" title="Zoom In">+</button>
                         <button class="zoom-reset-btn" @click="${this.zoomReset}" ?disabled="${this.zoom === 1.0}" title="Reset Zoom">
-                            <span class="reset-text">Reset</span>
-                            <span class="reset-icon">↺</span>
+                            ↺
                         </button>
                     </div>
 
                     <div class="header-controls">
                         <button class="action-btn" @click="${this.handleExportSVG}" title="Download Sheet Music as Vector SVG">
-                            📥 <span class="btn-text">SVG Stave</span>
+                            📥 <span class="btn-text">Download</span>
                         </button>
                         <button class="action-btn" @click="${this.handleCopySVG}" title="Copy Raw SVG XML Code to Clipboard">
-                            📋 <span class="btn-text">Copy SVG</span>
+                            📋 <span class="btn-text">Copy</span>
                         </button>
                     </div>
                 </div>
@@ -609,6 +586,10 @@ export class PreviewComponent extends LitElement {
                         </div>
                     ` : ''}
                 </div>
+
+                <playback-component
+                    .visualObj="${this.visualObj}"
+                ></playback-component>
             </div>
         `;
     }
