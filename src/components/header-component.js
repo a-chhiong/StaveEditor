@@ -5,7 +5,8 @@ export class HeaderComponent extends LitElement {
     static properties = {
         status: { type: String },
         isError: { type: Boolean },
-        abcCode: { type: String }
+        abcCode: { type: String },
+        isFullscreen: { type: Boolean }
     };
 
     static styles = css`
@@ -99,33 +100,32 @@ export class HeaderComponent extends LitElement {
             white-space: nowrap;
         }
 
-        .autosave-badge {
+        .fullscreen-btn {
             display: flex;
             align-items: center;
-            gap: 6px;
-            font-size: 0.72rem;
-            font-weight: 600;
-            color: var(--text-muted);
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            padding: 4px 10px;
-            border-radius: 99px;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
             margin-left: 8px;
+            cursor: pointer;
             transition: all var(--transition-fast);
+            outline: none;
         }
 
-        .autosave-pulse {
-            width: 6px;
-            height: 6px;
-            background-color: var(--accent-emerald);
-            border-radius: 50%;
-            display: inline-block;
-            box-shadow: 0 0 6px var(--accent-emerald);
-            animation: pulse-glow-emerald 2s infinite ease-in-out;
+        .fullscreen-btn:hover {
+            background: var(--bg-glass-active);
+            border-color: var(--accent-violet);
+            color: var(--text-primary);
+            transform: scale(1.05);
         }
 
-        .autosave-text-short {
-            display: none;
+        .fullscreen-btn:active {
+            transform: scale(0.95);
         }
 
         .share-btn {
@@ -160,10 +160,6 @@ export class HeaderComponent extends LitElement {
             50% { transform: scale(1.08); filter: drop-shadow(0 0 8px rgba(167, 139, 250, 0.6)); }
         }
 
-        @keyframes pulse-glow-emerald {
-            0%, 100% { transform: scale(1); opacity: 0.4; }
-            50% { transform: scale(1.2); opacity: 1; }
-        }
 
         @media (max-width: 768px) {
             .header-container {
@@ -202,24 +198,10 @@ export class HeaderComponent extends LitElement {
                 margin-left: 2px;
             }
 
-            .autosave-badge {
-                padding: 3px 6px;
-                font-size: 0.65rem;
-                margin-left: 2px;
-                gap: 4px;
-            }
-
-            .autosave-pulse {
-                width: 4px;
-                height: 4px;
-            }
-
-            .autosave-text-full {
-                display: none;
-            }
-
-            .autosave-text-short {
-                display: inline;
+            .fullscreen-btn {
+                width: 24px;
+                height: 24px;
+                margin-left: 4px;
             }
 
             .share-btn {
@@ -234,11 +216,7 @@ export class HeaderComponent extends LitElement {
             .status-text {
                 display: none;
             }
-            .autosave-badge {
-                padding: 2px 4px;
-                font-size: 0.6rem;
-                gap: 2px;
-            }
+
         }
     `;
 
@@ -247,6 +225,30 @@ export class HeaderComponent extends LitElement {
         this.status = 'Ready';
         this.isError = false;
         this.shareText = 'Share';
+        this.isFullscreen = false;
+    }
+
+    connectedCallback() {
+        super.connectedCallback();
+        this._onFullscreenChange = () => {
+            this.isFullscreen = !!document.fullscreenElement;
+        };
+        document.addEventListener('fullscreenchange', this._onFullscreenChange);
+    }
+
+    disconnectedCallback() {
+        document.removeEventListener('fullscreenchange', this._onFullscreenChange);
+        super.disconnectedCallback();
+    }
+
+    toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen().catch((err) => {
+                console.warn(`Error attempting to enable fullscreen: ${err.message}`);
+            });
+        } else {
+            document.exitFullscreen();
+        }
     }
 
     async copyTextToClipboard(text) {
@@ -309,14 +311,21 @@ export class HeaderComponent extends LitElement {
                     <span class="${badgeClass}">${badgeText}</span>
                     <span class="status-text">${this.status}</span>
                     
-                    <span class="autosave-badge" title="Automatically backed up to local storage regularly">
-                        <span class="autosave-pulse"></span>
-                        <span class="autosave-text-full">Autosave Active</span>
-                        <span class="autosave-text-short">Autosave</span>
-                    </span>
-                    
                     <button class="share-btn" @click="${this.handleShare}" title="Copy link to this composition">
                         🔗 <span>${this.shareText}</span>
+                    </button>
+
+                    <button class="fullscreen-btn" @click="${this.toggleFullscreen}" title="Toggle fullscreen mode">
+                        ${this.isFullscreen
+                            ? html`
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+                                  <path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7" stroke-linecap="round" stroke-linejoin="round"/>
+                              </svg>`
+                            : html`
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 14px; height: 14px;">
+                                  <path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3" stroke-linecap="round" stroke-linejoin="round"/>
+                              </svg>`
+                        }
                     </button>
                 </div>
             </div>
