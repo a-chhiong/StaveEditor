@@ -57,7 +57,7 @@ export class AppComponent extends LitElement {
 
         /* Sleek Splitter drag bar */
         .app-splitter {
-            background: var(--border-color);
+            background: var(--bg-splitter-line);
             position: relative;
             flex-shrink: 0;
             z-index: 5;
@@ -68,6 +68,28 @@ export class AppComponent extends LitElement {
         .app-splitter.dragging {
             background: var(--accent-violet);
             box-shadow: 0 0 12px rgba(139, 92, 246, 0.6);
+        }
+
+        .app-splitter::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 2px;
+            height: 24px;
+            background: var(--text-secondary);
+            border-radius: 99px;
+            opacity: 0.8;
+            transition: background var(--transition-fast), opacity var(--transition-fast);
+            z-index: 6;
+            pointer-events: none;
+        }
+
+        .app-splitter:hover::before,
+        .app-splitter.dragging::before {
+            background: var(--text-primary);
+            opacity: 1;
         }
 
         .app-splitter::after {
@@ -101,6 +123,12 @@ export class AppComponent extends LitElement {
                 width: 100%;
                 height: 4px;
                 cursor: row-resize;
+            }
+
+            .app-splitter::before {
+                width: 24px;
+                height: 2px;
+                background-image: none;
             }
 
             .app-splitter::after {

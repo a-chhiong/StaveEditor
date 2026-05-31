@@ -64,6 +64,7 @@
 
     --midi-btn-bg: rgba(0, 0, 0, 0.04);
     --midi-progress-bg: rgba(0, 0, 0, 0.08);
+    --bg-splitter-line: rgba(0, 0, 0, 0.15);
 }
 
 html[data-theme="dark"] {
@@ -111,6 +112,7 @@ html[data-theme="dark"] {
 
     --midi-btn-bg: rgba(255, 255, 255, 0.05);
     --midi-progress-bg: rgba(255, 255, 255, 0.1);
+    --bg-splitter-line: rgba(255, 255, 255, 0.16);
 }
 
 /* CSS Reset & Workspace Lock */
