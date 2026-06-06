@@ -137,6 +137,63 @@ export class AppComponent extends LitElement {
             }
 
         }
+
+        /* Sleek compact statusbar at the bottom */
+        .app-statusbar {
+            display: flex;
+            align-items: center;
+            height: 22px;
+            padding: 0 10px;
+            background: var(--bg-secondary);
+            border-top: 1px solid var(--border-color);
+            box-sizing: border-box;
+            user-select: none;
+            gap: 8px;
+            font-family: var(--font-ui);
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            z-index: 10;
+            flex-shrink: 0;
+        }
+
+        .status-badge {
+            font-size: 0.62rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            padding: 1px 6px;
+            border-radius: 3px;
+            letter-spacing: 0.05em;
+            transition: all var(--transition-fast);
+            line-height: 1.2;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .status-badge.ready {
+            background: rgba(16, 185, 129, 0.15);
+            color: var(--accent-emerald);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+        }
+
+        .status-badge.error {
+            background: rgba(244, 63, 94, 0.15);
+            color: var(--accent-rose);
+            border: 1px solid rgba(244, 63, 94, 0.25);
+        }
+
+        .status-text {
+            font-weight: 500;
+            max-width: 300px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        @media (max-width: 480px) {
+            .status-text {
+                max-width: 150px;
+            }
+        }
     `;
 
     constructor() {
@@ -262,12 +319,12 @@ K: G
 
     render() {
         const isDesktop = window.innerWidth > 1024;
+        const badgeClass = this.isError ? 'status-badge error' : 'status-badge ready';
+        const badgeText = this.isError ? 'Error' : 'Ready';
         
         return html`
             <div class="app-container">
                 <header-component
-                    .status="${this.status}"
-                    .isError="${this.isError}"
                     .abcCode="${this.abcCode}"
                 ></header-component>
 
@@ -290,6 +347,11 @@ K: G
                         ></preview-component>
                     </div>
                 </main>
+
+                <footer class="app-statusbar">
+                    <span class="${badgeClass}">${badgeText}</span>
+                    <span class="status-text">${this.status}</span>
+                </footer>
             </div>
         `;
     }

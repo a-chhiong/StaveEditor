@@ -1,4 +1,4 @@
-import { LitElement, html, css, unsafeCSS } from 'lit';
+import { LitElement, html, css } from 'lit';
 
 export class EditorComponent extends LitElement {
     static properties = {
@@ -13,6 +13,8 @@ export class EditorComponent extends LitElement {
             flex-direction: column;
             width: 100%;
             height: 100%;
+            flex: 1;
+            min-height: 0;
             overflow: hidden;
         }
 
@@ -32,10 +34,11 @@ export class EditorComponent extends LitElement {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            height: 56px;
+            height: 40px;
             padding: 0 16px;
             background: var(--bg-panel-header);
             border-bottom: 1px solid var(--border-color);
+            box-sizing: border-box;
             flex-shrink: 0;
             gap: 12px;
             min-width: 0;
@@ -63,16 +66,19 @@ export class EditorComponent extends LitElement {
             border: 1px solid var(--border-color);
             color: var(--text-secondary);
             font-family: var(--font-ui);
-            font-size: 0.82rem;
+            font-size: 0.9rem;
             font-weight: 600;
-            padding: 8px 12px;
+            height: 28px;
+            width: 28px;
             border-radius: 6px;
             cursor: pointer;
             transition: all var(--transition-fast);
             display: flex;
             align-items: center;
-            gap: 5px;
-            white-space: nowrap;
+            justify-content: center;
+            outline: none;
+            box-sizing: border-box;
+            flex-shrink: 0;
         }
 
         .action-btn:hover {
@@ -253,8 +259,14 @@ export class EditorComponent extends LitElement {
 
         @media (max-width: 768px) {
             .editor-header {
-                height: 48px;
+                height: 36px;
                 padding: 0 10px;
+            }
+
+            .action-btn {
+                height: 24px;
+                width: 24px;
+                font-size: 0.75rem;
             }
 
             .editor-input {
@@ -283,7 +295,17 @@ export class EditorComponent extends LitElement {
             }
         }
 
-        ${unsafeCSS(`
+        @media (max-width: 480px) {
+            .editor-header {
+                height: 36px;
+                padding: 0 8px;
+                gap: 4px;
+            }
+            .header-controls {
+                gap: 4px;
+            }
+        }
+
         /* Container queries for dynamic splitter resizing sensitivity */
         @container (max-width: 520px) {
             .title-text {
@@ -295,14 +317,15 @@ export class EditorComponent extends LitElement {
             }
 
             .action-btn {
-                padding: 5px 8px;
-                gap: 0;
+                height: 28px;
+                width: 28px;
+                font-size: 0.9rem;
             }
         }
 
         @container (max-width: 380px) {
             .editor-header {
-                height: 44px;
+                height: 36px;
                 padding: 0 8px;
                 gap: 6px;
             }
@@ -312,10 +335,11 @@ export class EditorComponent extends LitElement {
             }
 
             .action-btn {
-                padding: 4px 6px;
+                height: 24px;
+                width: 24px;
+                font-size: 0.75rem;
             }
         }
-        `)}
     `;
 
     constructor() {
@@ -440,17 +464,17 @@ export class EditorComponent extends LitElement {
                             @click="${this.toggleToolbar}"
                             title="Toggle symbol toolbar"
                         >
-                            🎹 <span class="btn-text">Symbols</span>
+                            🎹
                         </button>
 
                         <button class="action-btn" @click="${this.triggerFileInput}" title="Load .abc notation file from your device">
-                            📂 <span class="btn-text">Load</span>
+                            📂
                         </button>
                         <button class="action-btn" @click="${this.handleSaveABCFile}" title="Save current composition as a raw .abc file">
-                            💾 <span class="btn-text">Save</span>
+                            💾
                         </button>
                         <button class="action-btn danger" @click="${this.handleClear}" title="Clear all text">
-                            🗑️ <span class="btn-text">Clear</span>
+                            🗑️
                         </button>
                     </div>
                 </div>

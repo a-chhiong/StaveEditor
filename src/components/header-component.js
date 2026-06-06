@@ -3,8 +3,6 @@ import LZString from 'lz-string';
 
 export class HeaderComponent extends LitElement {
     static properties = {
-        status: { type: String },
-        isError: { type: Boolean },
         abcCode: { type: String },
         isFullscreen: { type: Boolean },
         currentTheme: { type: String },
@@ -22,7 +20,7 @@ export class HeaderComponent extends LitElement {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            height: 56px;
+            height: 48px;
             padding: 0 20px;
             background: var(--bg-glass);
             backdrop-filter: blur(12px);
@@ -61,65 +59,33 @@ export class HeaderComponent extends LitElement {
             display: inline-block;
         }
 
-        /* Status & Autosave Area */
-        .status-area {
+        .controls-wrapper {
             display: flex;
             align-items: center;
-            gap: 10px;
-        }
-
-        .status-badge {
-            font-size: 0.68rem;
-            font-weight: 700;
-            text-transform: uppercase;
-            padding: 3px 8px;
-            border-radius: 4px;
-            letter-spacing: 0.05em;
-            transition: all var(--transition-fast);
-        }
-
-        .status-badge.ready {
-            background: rgba(16, 185, 129, 0.15);
-            color: var(--accent-emerald);
-            border: 1px solid rgba(16, 185, 129, 0.2);
-            box-shadow: 0 0 8px rgba(16, 185, 129, 0.1);
-        }
-
-        .status-badge.error {
-            background: rgba(244, 63, 94, 0.15);
-            color: var(--accent-rose);
-            border: 1px solid rgba(244, 63, 94, 0.25);
-            box-shadow: 0 0 8px rgba(244, 63, 94, 0.1);
-        }
-
-        .status-text {
-            font-size: 0.75rem;
-            font-weight: 500;
-            color: var(--text-secondary);
-            font-family: var(--font-ui);
-            max-width: 250px;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
         }
 
         .header-btn {
             display: flex;
             align-items: center;
             justify-content: center;
-            width: 42px;
-            height: 42px;
-            font-size: 1.1rem;
+            width: 32px;
+            height: 32px;
+            font-size: 0.95rem;
             color: var(--text-secondary);
             background: var(--midi-btn-bg);
             border: 1px solid var(--border-color);
-            border-radius: 8px;
-            margin-left: 8px;
+            border-radius: 6px;
+            margin-left: 6px;
             cursor: pointer;
             transition: all var(--transition-fast);
             outline: none;
             padding: 0;
             flex-shrink: 0;
+        }
+
+        .header-btn svg {
+            width: 16px;
+            height: 16px;
         }
 
         .header-btn:hover {
@@ -142,7 +108,7 @@ export class HeaderComponent extends LitElement {
         @media (max-width: 768px) {
             .header-container {
                 padding: 0 8px;
-                height: 48px;
+                height: 44px;
             }
 
             .logo-subtitle {
@@ -161,41 +127,23 @@ export class HeaderComponent extends LitElement {
                 font-size: 0.95rem;
             }
 
-            .status-area {
-                gap: 6px;
-            }
-
-            .status-badge {
-                font-size: 0.62rem;
-                padding: 2px 6px;
-            }
-
-            .status-text {
-                font-size: 0.65rem;
-                max-width: 90px;
-                margin-left: 2px;
-            }
-
             .header-btn {
-                width: 38px;
-                height: 38px;
-                font-size: 1rem;
+                width: 30px;
+                height: 30px;
+                font-size: 0.85rem;
                 margin-left: 4px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .status-text {
-                display: none;
+                border-radius: 5px;
             }
 
+            .header-btn svg {
+                width: 14px;
+                height: 14px;
+            }
         }
     `;
 
     constructor() {
         super();
-        this.status = 'Ready';
-        this.isError = false;
         this.isFullscreen = false;
         this._fauxFullscreen = false;
         this.shareSuccess = false;
@@ -308,9 +256,6 @@ export class HeaderComponent extends LitElement {
     }
 
     render() {
-        const badgeClass = this.isError ? 'status-badge error' : 'status-badge ready';
-        const badgeText = this.isError ? 'Error' : 'Ready';
-
         return html`
             <div class="header-container">
                 <div class="logo-area">
@@ -319,10 +264,7 @@ export class HeaderComponent extends LitElement {
                     <span class="logo-subtitle">ABC Studio</span>
                 </div>
 
-                <div class="status-area">
-                    <span class="${badgeClass}">${badgeText}</span>
-                    <span class="status-text">${this.status}</span>
-                    
+                <div class="controls-wrapper">
                     <button class="header-btn" @click="${this.handleShare}" title="Copy shareable link to clipboard">
                         ${this.shareSuccess ? '✅' : '🔗'}
                     </button>
@@ -330,11 +272,11 @@ export class HeaderComponent extends LitElement {
                     <button class="header-btn" @click="${this.toggleFullscreen}" title="Toggle fullscreen mode">
                         ${this.isFullscreen
                             ? html`
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                   <path d="M4 14h6v6M20 10h-6V4M14 10l7-7M10 14l-7 7" stroke-linecap="round" stroke-linejoin="round"/>
                               </svg>`
                             : html`
-                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width: 18px; height: 18px;">
+                              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                                   <path d="M8 3H5a2 2 0 0 0-2 2v3M21 8V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3M16 21h3a2 2 0 0 0 2-2v-3" stroke-linecap="round" stroke-linejoin="round"/>
                               </svg>`
                         }
