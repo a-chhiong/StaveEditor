@@ -405,7 +405,6 @@ export class EditorComponent extends LitElement {
 
                 <div class="quick-toolbar">
                     <div class="toolbar-group">
-                        <span class="toolbar-group-label">Insert:</span>
                         <button class="toolbar-btn" @click="${() => this.insertSymbol('|')}" title="Barline">|</button>
                         <button class="toolbar-btn" @click="${() => this.insertSymbol('|:')}" title="Start Repeat">|:</button>
                         <button class="toolbar-btn" @click="${() => this.insertSymbol(':|')}" title="End Repeat">:|</button>
