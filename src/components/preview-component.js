@@ -37,12 +37,16 @@ export class PreviewComponent extends LitElement {
             display: flex;
             align-items: center;
             justify-content: space-between;
+            height: 40px;
             padding: 0 16px;
             background: var(--bg-panel-header);
+            border-top: 1px solid var(--border-color);
             border-bottom: 1px solid var(--border-color);
             box-sizing: border-box;
             flex-shrink: 0;
             gap: 12px;
+            position: relative;
+            z-index: 20;
         }
 
         .header-title {
@@ -513,16 +517,16 @@ export class PreviewComponent extends LitElement {
             if (visualObjArray && visualObjArray.length > 0) {
                 const visualObj = visualObjArray[0];
                 this.visualObj = visualObj;
-                
+
                 // Read parsing warnings
                 const warnings = visualObj.warnings || [];
                 this.warnings = warnings;
 
                 const hasErrors = warnings.length > 0;
-                
+
                 this.dispatchEvent(new CustomEvent('status-changed', {
-                    detail: { 
-                        status: hasErrors ? `✓ Rendered (${warnings.length} warning${warnings.length > 1 ? 's' : ''})` : '✓ Sheet Music Ready', 
+                    detail: {
+                        status: hasErrors ? `✓ Rendered (${warnings.length} warning${warnings.length > 1 ? 's' : ''})` : '✓ Sheet Music Ready',
                         isError: false // Non-fatal rendering
                     },
                     bubbles: true,
@@ -541,13 +545,13 @@ export class PreviewComponent extends LitElement {
             displayDiv.innerHTML = '';
             this.visualObj = null;
             this.warnings = [{ message: error.message, line: 'System', column: '' }];
-            
+
             this.dispatchEvent(new CustomEvent('status-changed', {
                 detail: { status: '✗ Compilation Error', isError: true },
                 bubbles: true,
                 composed: true
             }));
-            
+
             this.dispatchEvent(new CustomEvent('render-completed', {
                 detail: { visualObj: null },
                 bubbles: true,
