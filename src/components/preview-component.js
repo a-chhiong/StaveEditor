@@ -115,7 +115,7 @@ export class PreviewComponent extends LitElement {
             padding: 24px;
             display: flex;
             flex-direction: column;
-            align-items: center;
+            align-items: flex-start; /* Anchor to left so zoomed paper never clips left edge */
             min-height: 0;
         }
 
@@ -127,7 +127,7 @@ export class PreviewComponent extends LitElement {
             box-shadow: var(--shadow-paper);
             padding: 30px;
             transition: width var(--transition-normal), min-width var(--transition-normal);
-            margin-bottom: 20px;
+            margin: 0 auto 20px auto; /* Self-center when paper fits; auto margins collapse when paper is wider */
             box-sizing: border-box;
             border: 1px solid rgba(0, 0, 0, 0.06);
         }

@@ -2,7 +2,8 @@ import { LitElement, html, css, unsafeCSS } from 'lit';
 
 export class EditorComponent extends LitElement {
     static properties = {
-        abcCode: { type: String }
+        abcCode: { type: String },
+        toolbarOpen: { type: Boolean }
     };
 
     static styles = css`
@@ -20,7 +21,7 @@ export class EditorComponent extends LitElement {
             flex-direction: column;
             flex: 1;
             min-height: 0;
-            overflow: hidden;
+            min-width: 0;
             background: var(--bg-glass);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
@@ -37,6 +38,7 @@ export class EditorComponent extends LitElement {
             border-bottom: 1px solid var(--border-color);
             flex-shrink: 0;
             gap: 12px;
+            min-width: 0;
         }
 
         .header-title {
@@ -97,12 +99,21 @@ export class EditorComponent extends LitElement {
             color: var(--accent-rose);
         }
 
-        /* Code Editor Input */
+        /* Active state for toolbar toggle button */
+        .action-btn.toolbar-toggle-btn.active {
+            background: linear-gradient(135deg, var(--accent-indigo) 0%, var(--accent-violet) 100%);
+            border-color: var(--accent-violet);
+            color: var(--text-primary);
+            box-shadow: 0 2px 8px rgba(139, 92, 246, 0.35);
+        }
+
+        /* Code Editor Input Area */
         .editor-content {
             display: flex;
             flex-direction: column;
             flex: 1;
             min-height: 0;
+            min-width: 0;
             overflow: hidden;
             position: relative;
         }
@@ -120,39 +131,69 @@ export class EditorComponent extends LitElement {
             line-height: 1.6;
             outline: none;
             overflow-y: auto;
+            overflow-x: auto;
+            white-space: pre;
+            word-wrap: normal;
             tab-size: 4;
             caret-color: var(--accent-violet);
         }
 
-        /* Custom Keyboard Helper Toolbar */
+        /* ─── Toolbar Drawer ──────────────────────────────────────────────── */
+
+        /* Backdrop — closes drawer when clicking outside */
+        .toolbar-backdrop {
+            position: absolute;
+            inset: 0;
+            z-index: 10;
+            background: transparent;
+            pointer-events: none;
+            opacity: 0;
+        }
+
+        .toolbar-backdrop.open {
+            pointer-events: auto;
+        }
+
+        /* Drawer panel that slides up from the bottom of .editor-content */
         .quick-toolbar {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 11;
             display: flex;
-            flex-wrap: nowrap; /* Do not wrap! */
+            flex-wrap: nowrap;
             align-items: center;
             gap: 8px;
-            padding: 10px 16px;
+            padding: 12px 16px;
             background: var(--bg-toolbar);
             border-top: 1px solid var(--border-color);
-            flex-shrink: 0;
-            overflow-x: auto; /* Horizontally scrollable if screen width not enough */
-            width: 100%;
-            scrollbar-width: thin;
+            box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.15);
+            overflow-x: auto;
+            scrollbar-width: none;
+
+            /* Slide transition */
+            transform: translateY(100%);
+            transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+                        box-shadow 0.25s ease;
         }
 
         .quick-toolbar::-webkit-scrollbar {
-            height: 4px;
+            display: none;
         }
 
-        .quick-toolbar::-webkit-scrollbar-thumb {
-            background: var(--scroll-thumb);
-            border-radius: 2px;
+        .quick-toolbar.open {
+            transform: translateY(0);
+            box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.2);
         }
+
+        /* ─── Toolbar Contents ────────────────────────────────────────────── */
 
         .toolbar-group {
             display: flex;
             align-items: center;
             gap: 4px;
-            flex-wrap: nowrap; /* Keep items in a line */
+            flex-wrap: nowrap;
         }
 
         .toolbar-group-label {
@@ -204,6 +245,12 @@ export class EditorComponent extends LitElement {
             flex-shrink: 0;
         }
 
+        /* Invisible trailing spacer — mirrors the leading padding-left on the first button */
+        .toolbar-end-spacer {
+            width: 12px;
+            flex-shrink: 0;
+        }
+
         @media (max-width: 768px) {
             .editor-header {
                 height: 48px;
@@ -226,7 +273,7 @@ export class EditorComponent extends LitElement {
             }
 
             .toolbar-divider {
-                display: block; /* Keep dividers visible in horizontal scroll */
+                display: block;
             }
 
             .toolbar-btn {
@@ -274,6 +321,15 @@ export class EditorComponent extends LitElement {
     constructor() {
         super();
         this.abcCode = '';
+        this.toolbarOpen = false;
+    }
+
+    toggleToolbar() {
+        this.toolbarOpen = !this.toolbarOpen;
+    }
+
+    closeToolbar() {
+        this.toolbarOpen = false;
     }
 
     handleInput(e) {
@@ -287,8 +343,6 @@ export class EditorComponent extends LitElement {
             composed: true,
         }));
     }
-
-
 
     triggerFileInput() {
         const fileInput = this.shadowRoot.getElementById('abc-file-input');
@@ -380,7 +434,15 @@ export class EditorComponent extends LitElement {
                     </div>
                     <div class="header-controls">
                         <input type="file" id="abc-file-input" accept=".abc,.txt" style="display: none;" @change="${this.handleLoadABCFile}">
-                        
+
+                        <button
+                            class="action-btn toolbar-toggle-btn ${this.toolbarOpen ? 'active' : ''}"
+                            @click="${this.toggleToolbar}"
+                            title="Toggle symbol toolbar"
+                        >
+                            🎹 <span class="btn-text">Symbols</span>
+                        </button>
+
                         <button class="action-btn" @click="${this.triggerFileInput}" title="Load .abc notation file from your device">
                             📂 <span class="btn-text">Load</span>
                         </button>
@@ -398,39 +460,49 @@ export class EditorComponent extends LitElement {
                         class="editor-input"
                         placeholder="Write your ABC Notation here..."
                         spellcheck="false"
+                        wrap="off"
                         .value="${this.abcCode}"
                         @input="${this.handleInput.bind(this)}"
                     ></textarea>
-                </div>
 
-                <div class="quick-toolbar">
-                    <div class="toolbar-group">
-                        <button class="toolbar-btn" @click="${() => this.insertSymbol('|')}" title="Barline">|</button>
-                        <button class="toolbar-btn" @click="${() => this.insertSymbol('|:')}" title="Start Repeat">|:</button>
-                        <button class="toolbar-btn" @click="${() => this.insertSymbol(':|')}" title="End Repeat">:|</button>
-                        <button class="toolbar-btn" @click="${() => this.insertSymbol('::')}" title="Double Repeat">::</button>
-                        <button class="toolbar-btn" @click="${() => this.insertSymbol('[|')}" title="Double Barline">[|</button>
-                        <button class="toolbar-btn" @click="${() => this.insertSymbol('|]')}" title="Thin-thick Double Bar">|]</button>
-                    </div>
-                    
-                    <div class="toolbar-divider"></div>
-                    
-                    <div class="toolbar-group">
-                        <button class="toolbar-btn" @click="${() => this.insertSymbol('^')}" title="Sharp (accidentals)">^</button>
-                        <button class="toolbar-btn" @click="${() => this.insertSymbol('_')}" title="Flat (accidentals)">_</button>
-                        <button class="toolbar-btn" @click="${() => this.insertSymbol('=')}" title="Natural (accidentals)">=</button>
-                        <button class="toolbar-btn" @click="${() => this.insertSymbol('/')}" title="Shorten note half">/</button>
-                        <button class="toolbar-btn" @click="${() => this.insertSymbol('>')}" title="Dotted rhythm (longer > shorter)">></button>
-                        <button class="toolbar-btn" @click="${() => this.insertSymbol('<')}" title="Dotted rhythm (shorter < longer)">&lt;</button>
-                    </div>
-                    
-                    <div class="toolbar-divider"></div>
-                    
-                    <div class="toolbar-group">
-                        <button class="toolbar-btn" @click="${() => this.insertSymbol('z')}" title="Rest">z</button>
-                        <button class="toolbar-btn" @click="${() => this.insertSymbol('[]')}" title="Chord brackets">[ ]</button>
-                        <button class="toolbar-btn" @click="${() => this.insertSymbol('()')}" title="Slur brackets">( )</button>
-                        <button class="toolbar-btn" @click="${() => this.insertSymbol('V: 1 clef=treble\\nV: 2 clef=bass\\n')}" title="Insert Two Voices">V:1/2</button>
+                    <!-- Backdrop: clicking it closes the drawer -->
+                    <div
+                        class="toolbar-backdrop ${this.toolbarOpen ? 'open' : ''}"
+                        @click="${this.closeToolbar}"
+                    ></div>
+
+                    <!-- Drawer panel -->
+                    <div class="quick-toolbar ${this.toolbarOpen ? 'open' : ''}">
+                        <div class="toolbar-group">
+                            <button class="toolbar-btn" @click="${() => this.insertSymbol('|')}" title="Barline">|</button>
+                            <button class="toolbar-btn" @click="${() => this.insertSymbol('|:')}" title="Start Repeat">|:</button>
+                            <button class="toolbar-btn" @click="${() => this.insertSymbol(':|')}" title="End Repeat">:|</button>
+                            <button class="toolbar-btn" @click="${() => this.insertSymbol('::')}" title="Double Repeat">::</button>
+                            <button class="toolbar-btn" @click="${() => this.insertSymbol('[|')}" title="Double Barline">[|</button>
+                            <button class="toolbar-btn" @click="${() => this.insertSymbol('|]')}" title="Thin-thick Double Bar">|]</button>
+                        </div>
+
+                        <div class="toolbar-divider"></div>
+
+                        <div class="toolbar-group">
+                            <button class="toolbar-btn" @click="${() => this.insertSymbol('^')}" title="Sharp (accidentals)">^</button>
+                            <button class="toolbar-btn" @click="${() => this.insertSymbol('_')}" title="Flat (accidentals)">_</button>
+                            <button class="toolbar-btn" @click="${() => this.insertSymbol('=')}" title="Natural (accidentals)">=</button>
+                            <button class="toolbar-btn" @click="${() => this.insertSymbol('/')}" title="Shorten note half">/</button>
+                            <button class="toolbar-btn" @click="${() => this.insertSymbol('>')}" title="Dotted rhythm (longer > shorter)">></button>
+                            <button class="toolbar-btn" @click="${() => this.insertSymbol('<')}" title="Dotted rhythm (shorter < longer)">&lt;</button>
+                        </div>
+
+                        <div class="toolbar-divider"></div>
+
+                        <div class="toolbar-group">
+                            <button class="toolbar-btn" @click="${() => this.insertSymbol('z')}" title="Rest">z</button>
+                            <button class="toolbar-btn" @click="${() => this.insertSymbol('[]')}" title="Chord brackets">[ ]</button>
+                            <button class="toolbar-btn" @click="${() => this.insertSymbol('()')}" title="Slur brackets">( )</button>
+                            <button class="toolbar-btn" @click="${() => this.insertSymbol('V: 1 clef=treble\\nV: 2 clef=bass\\n')}" title="Insert Two Voices">V:1/2</button>
+                        </div>
+
+                        <div class="toolbar-end-spacer"></div>
                     </div>
                 </div>
             </div>

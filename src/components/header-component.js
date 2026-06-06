@@ -8,7 +8,8 @@ export class HeaderComponent extends LitElement {
         abcCode: { type: String },
         isFullscreen: { type: Boolean },
         currentTheme: { type: String },
-        shareSuccess: { type: Boolean }
+        shareSuccess: { type: Boolean },
+        _fauxFullscreen: { type: Boolean, state: true }
     };
 
     static styles = css`
@@ -196,6 +197,7 @@ export class HeaderComponent extends LitElement {
         this.status = 'Ready';
         this.isError = false;
         this.isFullscreen = false;
+        this._fauxFullscreen = false;
         this.shareSuccess = false;
         this.currentTheme = document.documentElement.getAttribute('data-theme') || 'light';
     }
@@ -203,24 +205,63 @@ export class HeaderComponent extends LitElement {
     connectedCallback() {
         super.connectedCallback();
         this._onFullscreenChange = () => {
-            this.isFullscreen = !!document.fullscreenElement;
+            // Check both standard and webkit-prefixed fullscreen element
+            this.isFullscreen = !!(document.fullscreenElement || document.webkitFullscreenElement);
         };
         document.addEventListener('fullscreenchange', this._onFullscreenChange);
+        document.addEventListener('webkitfullscreenchange', this._onFullscreenChange);
     }
 
     disconnectedCallback() {
         document.removeEventListener('fullscreenchange', this._onFullscreenChange);
+        document.removeEventListener('webkitfullscreenchange', this._onFullscreenChange);
         super.disconnectedCallback();
     }
 
     toggleFullscreen() {
-        if (!document.fullscreenElement) {
-            document.documentElement.requestFullscreen().catch((err) => {
-                console.warn(`Error attempting to enable fullscreen: ${err.message}`);
-            });
-        } else {
-            document.exitFullscreen();
+        const el = document.documentElement;
+        const isInNativeFS = !!(document.fullscreenElement || document.webkitFullscreenElement);
+
+        if (isInNativeFS) {
+            // Exit native fullscreen — prefer standard, fallback to webkit
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            }
+            return;
         }
+
+        if (this._fauxFullscreen) {
+            // Exit CSS faux-fullscreen
+            el.classList.remove('faux-fullscreen');
+            this._fauxFullscreen = false;
+            this.isFullscreen = false;
+            return;
+        }
+
+        // Try standard Fullscreen API
+        if (el.requestFullscreen) {
+            el.requestFullscreen().catch((err) => {
+                console.warn(`requestFullscreen failed: ${err.message}`);
+            });
+            return;
+        }
+
+        // Try webkit-prefixed API (older Safari, Brave on iPad with WebKit)
+        if (el.webkitRequestFullscreen) {
+            try {
+                el.webkitRequestFullscreen();
+            } catch (err) {
+                console.warn(`webkitRequestFullscreen failed: ${err.message}`);
+            }
+            return;
+        }
+
+        // Last resort: CSS faux-fullscreen (iOS Safari blocks all fullscreen APIs)
+        el.classList.add('faux-fullscreen');
+        this._fauxFullscreen = true;
+        this.isFullscreen = true;
     }
 
     async copyTextToClipboard(text) {
