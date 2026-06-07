@@ -114,7 +114,7 @@ export class AppComponent extends LitElement {
         }
 
         /* Tablet & Mobile Layout */
-        @media (max-width: 1024px) {
+        @media (max-width: 1023px) {
             .app-main {
                 flex-direction: column-reverse;
             }
@@ -242,7 +242,7 @@ export class AppComponent extends LitElement {
         if (!mainEl) return;
         
         const rect = mainEl.getBoundingClientRect();
-        const isDesktop = window.innerWidth > 1024;
+        const isDesktop = window.innerWidth >= 1024;
         
         let percentage;
         if (isDesktop) {
@@ -318,7 +318,7 @@ K: G
     }
 
     render() {
-        const isDesktop = window.innerWidth > 1024;
+        const isDesktop = window.innerWidth >= 1024;
         const badgeClass = this.isError ? 'status-badge error' : 'status-badge ready';
         const badgeText = this.isError ? 'Error' : 'Ready';
         
