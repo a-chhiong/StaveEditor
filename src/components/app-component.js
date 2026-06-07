@@ -7,7 +7,8 @@ export class AppComponent extends LitElement {
         status: { type: String },
         isError: { type: Boolean },
         splitPercentage: { type: Number },
-        isDragging: { type: Boolean }
+        isDragging: { type: Boolean },
+        isDesktop: { type: Boolean }
     };
 
     static styles = css`
@@ -114,28 +115,25 @@ export class AppComponent extends LitElement {
         }
 
         /* Tablet & Mobile Layout */
-        @media (max-width: 1023px) {
-            .app-main {
-                flex-direction: column-reverse;
-            }
+        .app-container.layout-mobile .app-main {
+            flex-direction: column-reverse;
+        }
 
-            .app-splitter {
-                width: 100%;
-                height: 4px;
-                cursor: row-resize;
-            }
+        .app-container.layout-mobile .app-splitter {
+            width: 100%;
+            height: 4px;
+            cursor: row-resize;
+        }
 
-            .app-splitter::before {
-                width: 24px;
-                height: 2px;
-                background-image: none;
-            }
+        .app-container.layout-mobile .app-splitter::before {
+            width: 24px;
+            height: 2px;
+            background-image: none;
+        }
 
-            .app-splitter::after {
-                width: 100%;
-                height: 16px;
-            }
-
+        .app-container.layout-mobile .app-splitter::after {
+            width: 100%;
+            height: 16px;
         }
 
         /* Sleek compact statusbar at the bottom */
@@ -203,11 +201,24 @@ export class AppComponent extends LitElement {
         this.isError = false;
         this.splitPercentage = 50; // default 50/50 split
         this.isDragging = false;
+        this.isDesktop = this._checkIsDesktop();
+    }
+
+    _checkIsDesktop() {
+        const w = window.innerWidth;
+        const h = window.innerHeight;
+        if (w >= 1366 && h >= 768) {
+            return true;
+        }
+        return (w / h) >= 1.2;
     }
 
     connectedCallback() {
         super.connectedCallback();
-        this._onWindowResize = () => this.requestUpdate();
+        this._onWindowResize = () => {
+            this.isDesktop = this._checkIsDesktop();
+            this.requestUpdate();
+        };
         window.addEventListener('resize', this._onWindowResize);
     }
 
@@ -242,10 +253,9 @@ export class AppComponent extends LitElement {
         if (!mainEl) return;
         
         const rect = mainEl.getBoundingClientRect();
-        const isDesktop = window.innerWidth >= 1024;
         
         let percentage;
-        if (isDesktop) {
+        if (this.isDesktop) {
             percentage = ((clientX - rect.left) / rect.width) * 100;
         } else {
             // column-reverse layout: editor is at the bottom, preview is at the top
@@ -318,18 +328,17 @@ K: G
     }
 
     render() {
-        const isDesktop = window.innerWidth >= 1024;
         const badgeClass = this.isError ? 'status-badge error' : 'status-badge ready';
         const badgeText = this.isError ? 'Error' : 'Ready';
         
         return html`
-            <div class="app-container">
+            <div class="app-container ${this.isDesktop ? 'layout-desktop' : 'layout-mobile'}">
                 <header-component
                     .abcCode="${this.abcCode}"
                 ></header-component>
 
                 <main class="app-main">
-                    <div class="editor-area" style="${isDesktop ? `width: ${this.splitPercentage}%; flex: none;` : `height: ${this.splitPercentage}%; flex: none;`}">
+                    <div class="editor-area" style="${this.isDesktop ? `width: ${this.splitPercentage}%; flex: none;` : `height: ${this.splitPercentage}%; flex: none;`}">
                         <editor-component
                             .abcCode="${this.abcCode}"
                             @abc-changed="${this.handleABCChanged.bind(this)}"
@@ -340,9 +349,10 @@ K: G
                          @mousedown="${this.startDrag}" 
                          @touchstart="${this.startDrag}"></div>
                     
-                    <div class="preview-area" style="${isDesktop ? `width: ${100 - this.splitPercentage}%; flex: none;` : `height: ${100 - this.splitPercentage}%; flex: none;`}">
+                    <div class="preview-area" style="${this.isDesktop ? `width: ${100 - this.splitPercentage}%; flex: none;` : `height: ${100 - this.splitPercentage}%; flex: none;`}">
                         <preview-component
                             .abcCode="${this.abcCode}"
+                            ?desktop="${this.isDesktop}"
                             @status-changed="${this.handleStatusChanged.bind(this)}"
                         ></preview-component>
                     </div>

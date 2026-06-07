@@ -6,7 +6,8 @@ export class PreviewComponent extends LitElement {
         abcCode: { type: String },
         zoom: { type: Number },
         warnings: { type: Array },
-        visualObj: { type: Object }
+        visualObj: { type: Object },
+        desktop: { type: Boolean, reflect: true }
     };
 
     static styles = css`
