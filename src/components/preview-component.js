@@ -561,6 +561,12 @@ export class PreviewComponent extends LitElement {
         }
     }
 
+    _parseABCField(field) {
+        if (!this.abcCode) return '';
+        const match = this.abcCode.match(new RegExp(`^${field}:\\s*(.*)$`, 'm'));
+        return match ? match[1].trim() : '';
+    }
+
     handleExportSVG() {
         const svg = this.shadowRoot.querySelector('.notation-display svg');
         if (!svg) {
@@ -569,12 +575,15 @@ export class PreviewComponent extends LitElement {
         }
 
         try {
+            const title = this._parseABCField('T') || 'stave';
+            const cleanTitle = title.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'stave';
+
             const svgString = new XMLSerializer().serializeToString(svg);
             const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
             const url = URL.createObjectURL(blob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = 'stave.svg';
+            link.download = `${cleanTitle}.svg`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);

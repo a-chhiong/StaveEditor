@@ -402,8 +402,8 @@ export class EditorComponent extends LitElement {
         }
 
         try {
-            const title = this._parseABCField('T') || 'composition';
-            const cleanTitle = title.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'composition';
+            const title = this._parseABCField('T') || 'stave';
+            const cleanTitle = title.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'stave';
 
             const blob = new Blob([this.abcCode], { type: 'text/plain;charset=utf-8' });
             const url = URL.createObjectURL(blob);
