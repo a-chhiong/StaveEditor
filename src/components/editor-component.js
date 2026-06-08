@@ -125,8 +125,11 @@ export class EditorComponent extends LitElement {
         }
 
         .editor-input {
+            flex: 1;            /* Dynamic expansion: Take up exactly what's left in the flex layout */
             width: 100%;
             height: 100%;
+            min-height: 0;      /* CRITICAL: Force the layout engine to clamp it and use its scrollbar */
+            min-width: 0;      /* CRITICAL: Force the layout engine to clamp it and use its scrollbar */
             padding: 16px;
             font-family: var(--font-code);
             font-size: 0.85rem;
@@ -142,6 +145,7 @@ export class EditorComponent extends LitElement {
             word-wrap: normal;
             tab-size: 4;
             caret-color: var(--accent-violet);
+            box-sizing: border-box; /* Ensures the 16px padding doesn't create artificial overflow scrolling */
         }
 
         /* ─── Toolbar Drawer ──────────────────────────────────────────────── */
