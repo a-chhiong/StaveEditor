@@ -238,7 +238,9 @@ export class PlaybackComponent extends LitElement {
         this.progress = 0;
         this.currentTime = '0:00';
         this.totalTime = '0:00';
-        this.tempoMultiplier = 1.0;
+        
+        const storedTempo = localStorage.getItem('staveEditorTempo');
+        this.tempoMultiplier = storedTempo ? parseFloat(storedTempo) : 1.0;
         
         this.audioContext = null;
         this.synth = null;
@@ -263,7 +265,6 @@ export class PlaybackComponent extends LitElement {
         this.progress = 0;
         this.currentTime = '0:00';
         this.totalTime = '0:00';
-        this.tempoMultiplier = 1.0;
         this.synth = null;
         this.timingCallbacks = null;
         this.requestUpdate();
@@ -505,6 +506,7 @@ export class PlaybackComponent extends LitElement {
     async changeSpeed(mult) {
         if (this.tempoMultiplier === mult) return;
         this.tempoMultiplier = mult;
+        localStorage.setItem('staveEditorTempo', mult.toString());
 
         const wasPlaying = this.isPlaying;
         const currentProgress = parseFloat(this.progress) / 100 || 0;
