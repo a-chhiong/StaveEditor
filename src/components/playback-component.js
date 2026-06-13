@@ -499,21 +499,37 @@ export class PlaybackComponent extends LitElement {
         this.tempoMultiplier = mult;
 
         const wasPlaying = this.isPlaying;
+        const currentProgress = parseFloat(this.progress) / 100 || 0;
         
-        // Stop current audio/visual timing callbacks
-        this.stopPlayback();
+        // Stop current audio/visual timing callbacks without resetting progress
+        if (this.synth) {
+            try { this.synth.stop(); } catch(e){}
+        }
+        if (this.timingCallbacks) {
+            try { this.timingCallbacks.stop(); } catch(e){}
+        }
+        this.isPlaying = false;
         
-        // Force re-init on next play so it calculates the new tempo
+        // Force re-init so it calculates the new tempo
         this.isInitialized = false;
         this.isPrimed = false;
         this.synth = null;
         this.timingCallbacks = null;
         
         if (wasPlaying) {
-            await this.togglePlay();
-        } else {
-            this.requestUpdate();
+            await this.initAudio();
+            this.initTimingCallbacks();
+            if (this.synth) {
+                this.synth.seek(currentProgress, 'percent');
+                this.synth.start();
+            }
+            if (this.timingCallbacks) {
+                this.timingCallbacks.setProgress(currentProgress, 'percent');
+                this.timingCallbacks.start();
+            }
+            this.isPlaying = true;
         }
+        this.requestUpdate();
     }
 
     render() {
