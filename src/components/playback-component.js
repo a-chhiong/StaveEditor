@@ -424,8 +424,16 @@ export class PlaybackComponent extends LitElement {
             if (this.timingCallbacks) this.timingCallbacks.pause();
             this.isPlaying = false;
         } else {
-            if (this.synth) this.synth.start();
-            if (this.timingCallbacks) this.timingCallbacks.start();
+            const currentProgressPercent = parseFloat(this.progress) / 100 || 0;
+            if (this.synth) {
+                // Workaround for ABCJS tempo bug: explicit seek enforces the new tempo on a fresh start
+                this.synth.seek(currentProgressPercent, 'percent');
+                this.synth.start();
+            }
+            if (this.timingCallbacks) {
+                this.timingCallbacks.setProgress(currentProgressPercent, 'percent');
+                this.timingCallbacks.start();
+            }
             this.isPlaying = true;
         }
         this.requestUpdate();
