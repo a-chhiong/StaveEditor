@@ -244,7 +244,7 @@ export class HeaderComponent extends LitElement {
             let shareUrl = window.location.href;
             if (LZString && this.abcCode) {
                 const compressed = LZString.compressToEncodedURIComponent(this.abcCode);
-                shareUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?abc=' + compressed;
+                shareUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '#abc/' + compressed;
                 window.history.replaceState({ path: shareUrl }, '', shareUrl);
             }
             await this.copyTextToClipboard(shareUrl);

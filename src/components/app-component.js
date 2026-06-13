@@ -281,8 +281,14 @@ export class AppComponent extends LitElement {
     }
 
     _loadFromUrl() {
-        const params = new URLSearchParams(window.location.search);
-        const encoded = params.get('abc');
+        let encoded = null;
+        if (window.location.hash.startsWith('#abc/')) {
+            encoded = window.location.hash.substring(5);
+        } else {
+            const params = new URLSearchParams(window.location.search);
+            encoded = params.get('abc');
+        }
+
         if (encoded && LZString) {
             try {
                 const decoded = LZString.decompressFromEncodedURIComponent(encoded);
@@ -317,7 +323,7 @@ K: G
         
         if (LZString) {
             const compressed = LZString.compressToEncodedURIComponent(this.abcCode);
-            const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '?abc=' + compressed;
+            const newUrl = window.location.protocol + "//" + window.location.host + window.location.pathname + '#abc/' + compressed;
             window.history.replaceState({ path: newUrl }, '', newUrl);
         }
     }
