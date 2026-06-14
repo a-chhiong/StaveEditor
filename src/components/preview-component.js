@@ -574,7 +574,12 @@ export class PreviewComponent extends LitElement {
     }
 
     handleWheel(e) {
-        // Prevent default to stop browser page zoom or native vertical scrolling
+        // Only zoom if Ctrl is pressed (this also captures native pinch-to-zoom on touchpads)
+        if (!e.ctrlKey) {
+            return; // Let browser perform standard scroll
+        }
+
+        // Prevent default to stop browser page zoom
         e.preventDefault();
         
         const zoomFactor = 1.1;
