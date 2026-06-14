@@ -8,7 +8,7 @@ import { PreviewComponent } from './components/preview-component.js';
 import { HeaderComponent } from './components/header-component.js';
 import { AppComponent } from './components/app-component.js';
 import { PlaybackComponent } from './components/playback-component.js';
-import { LightboxComponent } from './components/lightbox-component.js';
+import { PanelToggles } from './components/panel-toggles.js';
 
 // Register custom elements
 customElements.define('editor-component', EditorComponent);
@@ -16,7 +16,7 @@ customElements.define('preview-component', PreviewComponent);
 customElements.define('playback-component', PlaybackComponent);
 customElements.define('header-component', HeaderComponent);
 customElements.define('abc-app', AppComponent);
-customElements.define('lightbox-modal', LightboxComponent);
+customElements.define('panel-toggles', PanelToggles);
 
 console.log('ABC Editor initialized with Lit components');
 

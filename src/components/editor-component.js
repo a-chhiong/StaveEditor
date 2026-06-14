@@ -35,6 +35,7 @@ export class EditorComponent extends LitElement {
             align-items: center;
             justify-content: space-between;
             height: 40px;
+            min-height: 40px;
             padding: 0 16px;
             background: var(--bg-panel-header);
             border-bottom: 1px solid var(--border-color);
@@ -264,6 +265,7 @@ export class EditorComponent extends LitElement {
         @media (max-width: 768px) {
             .editor-header {
                 height: 36px;
+                min-height: 36px;
                 padding: 0 10px;
             }
 
@@ -330,6 +332,7 @@ export class EditorComponent extends LitElement {
         @container (max-width: 380px) {
             .editor-header {
                 height: 36px;
+                min-height: 36px;
                 padding: 0 8px;
                 gap: 6px;
             }

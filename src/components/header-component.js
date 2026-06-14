@@ -7,7 +7,9 @@ export class HeaderComponent extends LitElement {
         isFullscreen: { type: Boolean },
         currentTheme: { type: String },
         shareSuccess: { type: Boolean },
-        _fauxFullscreen: { type: Boolean, state: true }
+        _fauxFullscreen: { type: Boolean, state: true },
+        editorVisible: { type: Boolean },
+        previewVisible: { type: Boolean }
     };
 
     static styles = css`
@@ -267,6 +269,11 @@ export class HeaderComponent extends LitElement {
                 </div>
 
                 <div class="controls-wrapper">
+                    <panel-toggles
+                        .editorVisible="${this.editorVisible}"
+                        .previewVisible="${this.previewVisible}"
+                    ></panel-toggles>
+
                     <button class="header-btn" @click="${this.handleShare}" title="Copy shareable link to clipboard">
                         ${this.shareSuccess ? '✅' : '🔗'}
                     </button>

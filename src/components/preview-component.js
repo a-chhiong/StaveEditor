@@ -1,5 +1,7 @@
 import { LitElement, html, css } from 'lit';
 import ABCJS from 'abcjs';
+import { jsPDF } from "jspdf";
+import 'svg2pdf.js';
 
 export class PreviewComponent extends LitElement {
     static properties = {
@@ -7,7 +9,8 @@ export class PreviewComponent extends LitElement {
         zoom: { type: Number },
         warnings: { type: Array },
         visualObj: { type: Object },
-        desktop: { type: Boolean, reflect: true }
+        desktop: { type: Boolean, reflect: true },
+        isDragging: { type: Boolean, state: true }
     };
 
     static styles = css`
@@ -33,15 +36,14 @@ export class PreviewComponent extends LitElement {
             -webkit-backdrop-filter: blur(16px);
         }
 
-        /* Preview Header Panel */
         .preview-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
             height: 40px;
+            min-height: 40px;
             padding: 0 16px;
             background: var(--bg-panel-header);
-            border-top: 1px solid var(--border-color);
             border-bottom: 1px solid var(--border-color);
             box-sizing: border-box;
             flex-shrink: 0;
@@ -131,6 +133,30 @@ export class PreviewComponent extends LitElement {
             flex-direction: column;
             align-items: flex-start; /* Anchor to left so zoomed paper never clips left edge */
             min-height: 0;
+            cursor: grab;
+        }
+
+        .preview-canvas.dragging {
+            cursor: grabbing;
+            user-select: none;
+        }
+
+        .preview-canvas.dragging * {
+            cursor: grabbing !important;
+        }
+
+        .notation-display svg .abcjs-note {
+            cursor: pointer;
+            transition: opacity var(--transition-fast);
+        }
+
+        .notation-display svg .abcjs-note:hover {
+            opacity: 0.6;
+        }
+
+        .notation-display svg .abcjs-note.user-selected-note,
+        .notation-display svg .abcjs-note.user-selected-note * {
+            fill: #ef4444 !important;
         }
 
         /* The Sheet Music Paper */
@@ -141,9 +167,26 @@ export class PreviewComponent extends LitElement {
             box-shadow: var(--shadow-paper);
             padding: 30px;
             transition: width var(--transition-normal), min-width var(--transition-normal);
-            margin: 0 auto 20px auto; /* Self-center when paper fits; auto margins collapse when paper is wider */
+            margin: 0 auto 20px auto;
             box-sizing: border-box;
             border: 1px solid rgba(0, 0, 0, 0.06);
+        }
+
+        @media (max-width: 768px) {
+            .preview-header {
+                height: 36px;
+                min-height: 36px;
+                padding: 0 10px;
+            }
+        }
+
+        @container (max-width: 380px) {
+            .preview-header {
+                height: 36px;
+                min-height: 36px;
+                padding: 0 8px;
+                gap: 6px;
+            }
         }
 
         .notation-display {
@@ -294,6 +337,7 @@ export class PreviewComponent extends LitElement {
 
             .preview-header {
                 height: 36px;
+                min-height: 36px;
                 padding: 0 10px;
                 gap: 6px;
             }
@@ -381,6 +425,7 @@ export class PreviewComponent extends LitElement {
         @container (max-width: 380px) {
             .preview-header {
                 height: 36px;
+                min-height: 36px;
                 padding: 0 8px;
                 gap: 4px;
             }
@@ -440,6 +485,12 @@ export class PreviewComponent extends LitElement {
         this.warnings = [];
         this.visualObj = null;
         this._renderTimeout = null;
+
+        this.isDragging = false;
+        this.startX = 0;
+        this.startY = 0;
+        this.startScrollLeft = 0;
+        this.startScrollTop = 0;
     }
 
     updated(changedProperties) {
@@ -453,6 +504,14 @@ export class PreviewComponent extends LitElement {
         }
     }
 
+    firstUpdated() {
+        const canvas = this.shadowRoot.querySelector('.preview-canvas');
+        if (canvas) {
+            // Attach wheel listener with passive: false to allow e.preventDefault()
+            canvas.addEventListener('wheel', this.handleWheel.bind(this), { passive: false });
+        }
+    }
+
     disconnectedCallback() {
         super.disconnectedCallback();
         if (this._renderTimeout) {
@@ -461,19 +520,71 @@ export class PreviewComponent extends LitElement {
     }
 
     zoomIn() {
-        if (this.zoom < 1.5) {
-            this.zoom = parseFloat((this.zoom + 0.1).toFixed(1));
-        }
+        this.zoom = Math.min(5.0, parseFloat((this.zoom + 0.1).toFixed(1)));
     }
 
     zoomOut() {
-        if (this.zoom > 0.6) {
-            this.zoom = parseFloat((this.zoom - 0.1).toFixed(1));
-        }
+        this.zoom = Math.max(0.4, parseFloat((this.zoom - 0.1).toFixed(1)));
     }
 
     zoomReset() {
         this.zoom = 1.0;
+    }
+
+    handleMouseDown(e) {
+        if (e.button !== 0) return; // Left click only
+        
+        // Don't drag if clicking inside the warnings panel
+        if (e.target.closest('.warnings-panel')) {
+            return;
+        }
+
+        const canvas = this.shadowRoot.querySelector('.preview-canvas');
+        if (!canvas) return;
+        
+        this.isDragging = true;
+        this.startX = e.clientX;
+        this.startY = e.clientY;
+        this.startScrollLeft = canvas.scrollLeft;
+        this.startScrollTop = canvas.scrollTop;
+
+        this._onMouseMove = this.handleMouseMove.bind(this);
+        this._onMouseUp = this.handleMouseUp.bind(this);
+        window.addEventListener('mousemove', this._onMouseMove);
+        window.addEventListener('mouseup', this._onMouseUp);
+    }
+
+    handleMouseMove(e) {
+        if (!this.isDragging) return;
+        e.preventDefault();
+        const canvas = this.shadowRoot.querySelector('.preview-canvas');
+        if (!canvas) return;
+
+        const dx = e.clientX - this.startX;
+        const dy = e.clientY - this.startY;
+        
+        canvas.scrollLeft = this.startScrollLeft - dx;
+        canvas.scrollTop = this.startScrollTop - dy;
+    }
+
+    handleMouseUp(e) {
+        this.isDragging = false;
+        window.removeEventListener('mousemove', this._onMouseMove);
+        window.removeEventListener('mouseup', this._onMouseUp);
+    }
+
+    handleWheel(e) {
+        // Prevent default to stop browser page zoom or native vertical scrolling
+        e.preventDefault();
+        
+        const zoomFactor = 1.1;
+        let newZoom;
+        if (e.deltaY < 0) {
+            newZoom = this.zoom * zoomFactor;
+        } else {
+            newZoom = this.zoom / zoomFactor;
+        }
+        this.zoom = Math.max(0.4, Math.min(5.0, parseFloat(newZoom.toFixed(2))));
     }
 
     renderABC() {
@@ -511,7 +622,43 @@ export class PreviewComponent extends LitElement {
                     paddingbottom: 10,
                     paddingright: 10,
                     paddingleft: 10,
-                    add_classes: true // Renders CSS classes on SVGs for future interactivity
+                    add_classes: true, // Renders CSS classes on SVGs for future interactivity
+                    clickListener: (abcElem, tuneNumber, classes, analysis, drag, mouseEvent) => {
+                        // Prevent accidental clicks when dragging the canvas
+                        const dx = Math.abs(mouseEvent.clientX - this.startX);
+                        const dy = Math.abs(mouseEvent.clientY - this.startY);
+                        const wasDragging = dx > 5 || dy > 5;
+
+                        const clickedNote = mouseEvent.target.closest('.abcjs-note');
+                        
+                        if (clickedNote) {
+                            if (!wasDragging) {
+                                // Toggle the custom class for multi-selection only if it was a real click
+                                clickedNote.classList.toggle('user-selected-note');
+                            }
+                            
+                            // Defeat ABCJS's internal single-selection styling regardless
+                            // to ensure dragging doesn't leave a stray red highlight
+                            setTimeout(() => {
+                                clickedNote.classList.remove('abcjs-note_selected');
+                                clickedNote.removeAttribute('fill');
+                                clickedNote.style.fill = '';
+                                clickedNote.querySelectorAll('*').forEach(p => {
+                                    p.removeAttribute('fill');
+                                    p.style.fill = '';
+                                });
+                            }, 0);
+                        }
+
+                        if (wasDragging) return;
+
+                        // Dispatch event for other components, abcjs handles highlighting automatically
+                        this.dispatchEvent(new CustomEvent('note-clicked', {
+                            detail: { abcElem, classes },
+                            bubbles: true,
+                            composed: true
+                        }));
+                    }
                 }
             );
 
@@ -593,6 +740,52 @@ export class PreviewComponent extends LitElement {
         }
     }
 
+    async handleExportPDF() {
+        const svg = this.shadowRoot.querySelector('.notation-display svg');
+        if (!svg) {
+            alert('Please write some music first!');
+            return;
+        }
+
+        try {
+            const title = this._parseABCField('T') || 'stave';
+            const cleanTitle = title.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'stave';
+
+            let width = svg.width?.baseVal?.value || svg.getBoundingClientRect().width;
+            let height = svg.height?.baseVal?.value || svg.getBoundingClientRect().height;
+
+            if (!width || !height) {
+                const viewBox = svg.getAttribute('viewBox');
+                if (viewBox) {
+                    const parts = viewBox.split(' ');
+                    width = parseFloat(parts[2]);
+                    height = parseFloat(parts[3]);
+                } else {
+                    width = 800;
+                    height = 1131;
+                }
+            }
+
+            const doc = new jsPDF({
+                orientation: width > height ? 'landscape' : 'portrait',
+                unit: 'pt',
+                format: [width, height]
+            });
+
+            await doc.svg(svg, {
+                x: 0,
+                y: 0,
+                width: width,
+                height: height
+            });
+
+            doc.save(`${cleanTitle}.pdf`);
+        } catch (error) {
+            console.error('Failed to export PDF:', error);
+            alert('Failed to export PDF: ' + error.message);
+        }
+    }
+
     handleCopySVG() {
         const svg = this.shadowRoot.querySelector('.notation-display svg');
         if (!svg) {
@@ -619,15 +812,6 @@ export class PreviewComponent extends LitElement {
         }
     }
 
-    openLightbox() {
-        const svg = this.shadowRoot.querySelector('.notation-display svg');
-        if (!svg) return;
-
-        const modal = document.createElement('lightbox-modal');
-        modal.svgNode = svg;
-        document.body.appendChild(modal);
-    }
-
     render() {
         const hasCode = this.abcCode?.trim().length > 0;
         const paperWidthPercent = Math.round(this.zoom * 100);
@@ -640,20 +824,18 @@ export class PreviewComponent extends LitElement {
                     </div>
                     
                     <div class="zoom-controls">
-                        <button class="zoom-btn" @click="${this.zoomOut}" ?disabled="${this.zoom <= 0.6}" title="Zoom Out">-</button>
+                        <button class="zoom-btn" @click="${this.zoomOut}" ?disabled="${this.zoom <= 0.4}" title="Zoom Out">-</button>
                         <span class="zoom-value">${paperWidthPercent}%</span>
-                        <button class="zoom-btn" @click="${this.zoomIn}" ?disabled="${this.zoom >= 1.5}" title="Zoom In">+</button>
+                        <button class="zoom-btn" @click="${this.zoomIn}" ?disabled="${this.zoom >= 5.0}" title="Zoom In">+</button>
                         <button class="zoom-reset-btn" @click="${this.zoomReset}" ?disabled="${this.zoom === 1.0}" title="Reset Zoom">↺</button>
                     </div>
 
                     <div class="header-controls">
-                        <button class="action-btn" @click="${this.openLightbox}" ?disabled="${!hasCode}" title="View diagram fullscreen">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;pointer-events:none">
-                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke-linecap="round" stroke-linejoin="round"/>
-                                <circle cx="12" cy="12" r="3"/>
-                            </svg>
+
+                        <button class="action-btn" @click="${this.handleExportPDF}" title="Print / Download Sheet Music as PDF">
+                            🖨️
                         </button>
-                        <button class="action-btn" @click="${this.handleExportSVG}" title="Download Sheet Music as Vector SVG">
+                        <button class="action-btn" @click="${this.handleExportSVG}" title="Download Sheet Music as SVG">
                             📥
                         </button>
                         <button class="action-btn" @click="${this.handleCopySVG}" title="Copy Raw SVG XML Code to Clipboard">
@@ -662,7 +844,8 @@ export class PreviewComponent extends LitElement {
                     </div>
                 </div>
 
-                <div class="preview-canvas">
+                <div class="preview-canvas ${this.isDragging ? 'dragging' : ''}"
+                     @mousedown="${this.handleMouseDown}">
                     ${!hasCode ? html`
                         <div class="empty-state">
                             <span class="empty-icon">🎵</span>

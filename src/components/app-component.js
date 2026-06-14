@@ -8,7 +8,9 @@ export class AppComponent extends LitElement {
         isError: { type: Boolean },
         splitPercentage: { type: Number },
         isDragging: { type: Boolean },
-        isDesktop: { type: Boolean }
+        isDesktop: { type: Boolean },
+        editorVisible: { type: Boolean },
+        previewVisible: { type: Boolean }
     };
 
     static styles = css`
@@ -45,6 +47,7 @@ export class AppComponent extends LitElement {
             flex-direction: column;
             background: var(--bg-glass);
             border-right: 1px solid var(--border-color);
+            box-sizing: border-box;
         }
 
         .preview-area {
@@ -54,6 +57,7 @@ export class AppComponent extends LitElement {
             flex-direction: column;
             background: var(--bg-glass);
             border-left: 1px solid var(--border-color);
+            box-sizing: border-box;
         }
 
         /* Sleek Splitter drag bar */
@@ -187,6 +191,30 @@ export class AppComponent extends LitElement {
             white-space: nowrap;
         }
 
+        .placeholder-view {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+            height: 100%;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            text-align: center;
+            gap: 16px;
+        }
+
+        .placeholder-icon {
+            font-size: 3rem;
+            opacity: 0.5;
+            animation: pulse-slow 3s infinite ease-in-out;
+        }
+
+        @keyframes pulse-slow {
+            0%, 100% { opacity: 0.5; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.05); }
+        }
+
         @media (max-width: 480px) {
             .status-text {
                 max-width: 150px;
@@ -202,6 +230,8 @@ export class AppComponent extends LitElement {
         this.splitPercentage = 50; // default 50/50 split
         this.isDragging = false;
         this.isDesktop = this._checkIsDesktop();
+        this.editorVisible = true;
+        this.previewVisible = true;
     }
 
     _checkIsDesktop() {
@@ -333,35 +363,60 @@ K: G
         this.isError = e.detail.isError;
     }
 
+    handlePanelToggle(e) {
+        if (e.detail.panel === 'editor') {
+            this.editorVisible = e.detail.state;
+        } else if (e.detail.panel === 'preview') {
+            this.previewVisible = e.detail.state;
+        }
+        // Trigger resize so that abcjs can reflow when switching layouts
+        setTimeout(() => window.dispatchEvent(new Event('resize')), 50);
+    }
+
     render() {
         const badgeClass = this.isError ? 'status-badge error' : 'status-badge ready';
         const badgeText = this.isError ? 'Error' : 'Ready';
         
         return html`
-            <div class="app-container ${this.isDesktop ? 'layout-desktop' : 'layout-mobile'}">
+            <div class="app-container ${this.isDesktop ? 'layout-desktop' : 'layout-mobile'}" @toggle-panel="${this.handlePanelToggle}">
                 <header-component
                     .abcCode="${this.abcCode}"
+                    .editorVisible="${this.editorVisible}"
+                    .previewVisible="${this.previewVisible}"
                 ></header-component>
 
                 <main class="app-main">
-                    <div class="editor-area" style="${this.isDesktop ? `width: ${this.splitPercentage}%; flex: none;` : `height: ${this.splitPercentage}%; flex: none;`}">
-                        <editor-component
-                            .abcCode="${this.abcCode}"
-                            @abc-changed="${this.handleABCChanged.bind(this)}"
-                        ></editor-component>
-                    </div>
-                    
-                    <div class="app-splitter ${this.isDragging ? 'dragging' : ''}" 
-                         @mousedown="${this.startDrag}" 
-                         @touchstart="${this.startDrag}"></div>
-                    
-                    <div class="preview-area" style="${this.isDesktop ? `width: ${100 - this.splitPercentage}%; flex: none;` : `height: ${100 - this.splitPercentage}%; flex: none;`}">
-                        <preview-component
-                            .abcCode="${this.abcCode}"
-                            ?desktop="${this.isDesktop}"
-                            @status-changed="${this.handleStatusChanged.bind(this)}"
-                        ></preview-component>
-                    </div>
+                    ${!this.editorVisible && !this.previewVisible ? html`
+                        <div class="placeholder-view">
+                            <span class="placeholder-icon">🎵</span>
+                            <div>All panels hidden.<br>Toggle them from the header to start.</div>
+                        </div>
+                    ` : html`
+                        ${this.editorVisible ? html`
+                            <div class="editor-area" style="${this.isDesktop ? `width: calc(${this.previewVisible ? this.splitPercentage : 100}% - ${this.previewVisible ? 2 : 0}px); flex: none;` : `height: calc(${this.previewVisible ? this.splitPercentage : 100}% - ${this.previewVisible ? 2 : 0}px); flex: none;`}">
+                                <editor-component
+                                    .abcCode="${this.abcCode}"
+                                    @abc-changed="${this.handleABCChanged.bind(this)}"
+                                ></editor-component>
+                            </div>
+                        ` : ''}
+                        
+                        ${this.editorVisible && this.previewVisible ? html`
+                            <div class="app-splitter ${this.isDragging ? 'dragging' : ''}" 
+                                 @mousedown="${this.startDrag}" 
+                                 @touchstart="${this.startDrag}"></div>
+                        ` : ''}
+                        
+                        ${this.previewVisible ? html`
+                            <div class="preview-area" style="${this.isDesktop ? `width: calc(${this.editorVisible ? 100 - this.splitPercentage : 100}% - ${this.editorVisible ? 2 : 0}px); flex: none;` : `height: calc(${this.editorVisible ? 100 - this.splitPercentage : 100}% - ${this.editorVisible ? 2 : 0}px); flex: none;`}">
+                                <preview-component
+                                    .abcCode="${this.abcCode}"
+                                    ?desktop="${this.isDesktop}"
+                                    @status-changed="${this.handleStatusChanged.bind(this)}"
+                                ></preview-component>
+                            </div>
+                        ` : ''}
+                    `}
                 </main>
 
                 <footer class="app-statusbar">
