@@ -712,7 +712,6 @@ export class PreviewComponent extends LitElement {
             }));
         }
     }
-
     _parseABCField(field) {
         if (!this.abcCode) return '';
         const match = this.abcCode.match(new RegExp(`^${field}:\\s*(.*)$`, 'm'));
@@ -722,17 +721,21 @@ export class PreviewComponent extends LitElement {
     handleExportSVG() {
         const svg = this.shadowRoot.querySelector('.notation-display svg');
         if (!svg) {
-            alert('Please write some music first!');
+            this.dispatchEvent(new CustomEvent('show-alert', {
+                detail: { title: 'No Music Found', message: 'Please write some music before exporting to SVG.' },
+                bubbles: true, composed: true
+            }));
             return;
         }
 
         try {
             const title = this._parseABCField('T') || 'stave';
             const cleanTitle = title.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'stave';
-
-            const svgString = new XMLSerializer().serializeToString(svg);
-            const blob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
+            
+            const svgData = new XMLSerializer().serializeToString(svg);
+            const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
             const url = URL.createObjectURL(blob);
+            
             const link = document.createElement('a');
             link.href = url;
             link.download = `${cleanTitle}.svg`;
@@ -740,19 +743,35 @@ export class PreviewComponent extends LitElement {
             link.click();
             document.body.removeChild(link);
             URL.revokeObjectURL(url);
+            
+            this.dispatchEvent(new CustomEvent('status-changed', {
+                detail: { status: '✓ SVG exported successfully', isError: false },
+                bubbles: true, composed: true
+            }));
         } catch (error) {
-            alert('Failed to export SVG: ' + error.message);
+            this.dispatchEvent(new CustomEvent('show-alert', {
+                detail: { title: 'Export Failed', message: 'Failed to export SVG: ' + error.message },
+                bubbles: true, composed: true
+            }));
         }
     }
 
     async handleExportPDF() {
         const svg = this.shadowRoot.querySelector('.notation-display svg');
         if (!svg) {
-            alert('Please write some music first!');
+            this.dispatchEvent(new CustomEvent('show-alert', {
+                detail: { title: 'No Music Found', message: 'Please write some music before exporting to PDF.' },
+                bubbles: true, composed: true
+            }));
             return;
         }
 
         try {
+            this.dispatchEvent(new CustomEvent('status-changed', {
+                detail: { status: 'Generating PDF...', isError: false },
+                bubbles: true, composed: true
+            }));
+
             const title = this._parseABCField('T') || 'stave';
             const cleanTitle = title.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') || 'stave';
 
@@ -771,23 +790,57 @@ export class PreviewComponent extends LitElement {
                 }
             }
 
+            // High-resolution canvas for crisp sheet music
+            const scale = 3;
+            const canvas = document.createElement('canvas');
+            canvas.width = width * scale;
+            canvas.height = height * scale;
+            const ctx = canvas.getContext('2d');
+            
+            // Fill white background 
+            ctx.fillStyle = '#ffffff';
+            ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+            let svgData = new XMLSerializer().serializeToString(svg);
+            if (!svgData.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)) {
+                svgData = svgData.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+            }
+
+            const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(svgBlob);
+
+            const img = new Image();
+            await new Promise((resolve, reject) => {
+                img.onload = resolve;
+                img.onerror = () => reject(new Error("Failed to load SVG into Image"));
+                img.src = url;
+            });
+
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            URL.revokeObjectURL(url);
+
+            const imgData = canvas.toDataURL('image/jpeg', 0.95);
+            
+            const orientation = width > height ? 'landscape' : 'portrait';
             const doc = new jsPDF({
-                orientation: width > height ? 'landscape' : 'portrait',
+                orientation: orientation,
                 unit: 'pt',
                 format: [width, height]
             });
 
-            await doc.svg(svg, {
-                x: 0,
-                y: 0,
-                width: width,
-                height: height
-            });
-
+            doc.addImage(imgData, 'JPEG', 0, 0, width, height);
             doc.save(`${cleanTitle}.pdf`);
+
+            this.dispatchEvent(new CustomEvent('status-changed', {
+                detail: { status: '✓ PDF exported successfully', isError: false },
+                bubbles: true, composed: true
+            }));
         } catch (error) {
-            console.error('Failed to export PDF:', error);
-            alert('Failed to export PDF: ' + error.message);
+            console.error('PDF Export Error:', error);
+            this.dispatchEvent(new CustomEvent('show-alert', {
+                detail: { title: 'Export Failed', message: 'Failed to export PDF: ' + error.message },
+                bubbles: true, composed: true
+            }));
         }
     }
 

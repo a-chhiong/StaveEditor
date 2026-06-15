@@ -1,5 +1,9 @@
 import { LitElement, html, css } from 'lit';
 import LZString from 'lz-string';
+import './header-component.js';
+import './editor-component.js';
+import './preview-component.js';
+import './alert-dialog.js';
 
 export class AppComponent extends LitElement {
     static properties = {
@@ -10,7 +14,10 @@ export class AppComponent extends LitElement {
         isDragging: { type: Boolean },
         isDesktop: { type: Boolean },
         editorVisible: { type: Boolean },
-        previewVisible: { type: Boolean }
+        previewVisible: { type: Boolean },
+        alertOpen: { type: Boolean, state: true },
+        alertTitle: { type: String, state: true },
+        alertMessage: { type: String, state: true }
     };
 
     static styles = css`
@@ -232,6 +239,9 @@ export class AppComponent extends LitElement {
         this.isDesktop = this._checkIsDesktop();
         this.editorVisible = true;
         this.previewVisible = true;
+        this.alertOpen = false;
+        this.alertTitle = '';
+        this.alertMessage = '';
     }
 
     _checkIsDesktop() {
@@ -373,12 +383,20 @@ K: G
         setTimeout(() => window.dispatchEvent(new Event('resize')), 50);
     }
 
+    handleShowAlert(e) {
+        this.alertTitle = e.detail.title || 'Alert';
+        this.alertMessage = e.detail.message || '';
+        this.alertOpen = true;
+    }
+
     render() {
         const badgeClass = this.isError ? 'status-badge error' : 'status-badge ready';
         const badgeText = this.isError ? 'Error' : 'Ready';
         
         return html`
-            <div class="app-container ${this.isDesktop ? 'layout-desktop' : 'layout-mobile'}" @toggle-panel="${this.handlePanelToggle}">
+            <div class="app-container ${this.isDesktop ? 'layout-desktop' : 'layout-mobile'}" 
+                 @toggle-panel="${this.handlePanelToggle}"
+                 @show-alert="${this.handleShowAlert}">
                 <header-component
                     .abcCode="${this.abcCode}"
                     .editorVisible="${this.editorVisible}"
@@ -423,6 +441,13 @@ K: G
                     <span class="${badgeClass}">${badgeText}</span>
                     <span class="status-text">${this.status}</span>
                 </footer>
+
+                <alert-dialog
+                    ?open="${this.alertOpen}"
+                    .title="${this.alertTitle}"
+                    .message="${this.alertMessage}"
+                    @alert-closed="${() => this.alertOpen = false}"
+                ></alert-dialog>
             </div>
         `;
     }
