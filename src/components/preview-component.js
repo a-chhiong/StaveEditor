@@ -321,6 +321,13 @@ export class PreviewComponent extends LitElement {
             box-shadow: 0 2px 8px rgba(139, 92, 246, 0.2);
         }
 
+        .action-btn:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+            transform: none !important;
+            background: transparent !important;
+        }
+
         .action-btn.primary:hover {
             background: linear-gradient(135deg, var(--accent-indigo) 20%, var(--accent-violet) 100%);
             box-shadow: 0 2px 12px rgba(139, 92, 246, 0.4);
@@ -870,6 +877,26 @@ export class PreviewComponent extends LitElement {
         }
     }
 
+    openLightbox() {
+        const svg = this.shadowRoot.querySelector('.notation-display svg');
+        if (!svg) {
+            this.dispatchEvent(new CustomEvent('show-alert', {
+                detail: {
+                    title: 'No Music Found',
+                    message: 'Please write some music before opening fullscreen lightbox.'
+                },
+                bubbles: true,
+                composed: true
+            }));
+            return;
+        }
+
+        const modal = document.createElement('lightbox-modal');
+        modal.svgNode = svg;
+        modal.playbackComponent = this.shadowRoot.querySelector('playback-component');
+        document.body.appendChild(modal);
+    }
+
     render() {
         const hasCode = this.abcCode?.trim().length > 0;
         const paperWidthPercent = Math.round(this.zoom * 100);
@@ -889,6 +916,12 @@ export class PreviewComponent extends LitElement {
                     </div>
 
                     <div class="header-controls">
+                        <button class="action-btn" @click="${this.openLightbox}" ?disabled="${!hasCode}" title="Fullscreen Sheet Music Lightbox (Pan, Zoom, Playback)">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:16px;height:16px;pointer-events:none">
+                                <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" stroke-linecap="round" stroke-linejoin="round"/>
+                                <circle cx="12" cy="12" r="3"/>
+                            </svg>
+                        </button>
 
                         <button class="action-btn" @click="${this.handleExportPDF}" title="Print / Download Sheet Music as PDF">
                             🖨️
@@ -910,7 +943,7 @@ export class PreviewComponent extends LitElement {
                             <p>StaveEditor is ready.<br>Type ABC notation or choose a Preset to begin.</p>
                         </div>
                     ` : html`
-                        <div class="stave-paper" style="${`width: ${paperWidthPercent}%; min-width: ${paperWidthPercent}%;`}">
+                        <div class="stave-paper" @dblclick="${this.openLightbox}" title="Double-click to open Fullscreen Lightbox" style="${`width: ${paperWidthPercent}%; min-width: ${paperWidthPercent}%;`}">
                             <div class="notation-display"></div>
                         </div>
                     `}

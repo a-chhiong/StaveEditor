@@ -9,6 +9,7 @@ import { HeaderComponent } from './components/header-component.js';
 import { AppComponent } from './components/app-component.js';
 import { PlaybackComponent } from './components/playback-component.js';
 import { PanelToggles } from './components/panel-toggles.js';
+import { LightboxModal } from './components/lightbox-modal.js';
 
 // Register custom elements
 customElements.define('editor-component', EditorComponent);
@@ -19,4 +20,3 @@ customElements.define('abc-app', AppComponent);
 customElements.define('panel-toggles', PanelToggles);
 
 console.log('ABC Editor initialized with Lit components');
-

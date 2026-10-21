@@ -3,7 +3,9 @@ import { LitElement, html, css } from 'lit';
 export class EditorComponent extends LitElement {
     static properties = {
         abcCode: { type: String },
-        toolbarOpen: { type: Boolean }
+        toolbarOpen: { type: Boolean },
+        showLineNumbers: { type: Boolean, state: true },
+        lineNumbers: { type: Array, state: true }
     };
 
     static styles = css`
@@ -88,6 +90,14 @@ export class EditorComponent extends LitElement {
             border-color: var(--border-hover);
         }
 
+        /* Active state for toggle buttons (symbols & line numbers) */
+        .action-btn.active {
+            background: linear-gradient(135deg, var(--accent-indigo) 0%, var(--accent-violet) 100%);
+            border-color: var(--accent-violet);
+            color: #ffffff;
+            box-shadow: 0 2px 8px rgba(139, 92, 246, 0.35);
+        }
+
         .action-btn.primary {
             background: linear-gradient(135deg, var(--accent-indigo) 0%, var(--accent-violet) 100%);
             border: none;
@@ -106,14 +116,6 @@ export class EditorComponent extends LitElement {
             color: var(--accent-rose);
         }
 
-        /* Active state for toolbar toggle button */
-        .action-btn.toolbar-toggle-btn.active {
-            background: linear-gradient(135deg, var(--accent-indigo) 0%, var(--accent-violet) 100%);
-            border-color: var(--accent-violet);
-            color: var(--text-primary);
-            box-shadow: 0 2px 8px rgba(139, 92, 246, 0.35);
-        }
-
         /* Code Editor Input Area */
         .editor-content {
             display: flex;
@@ -125,12 +127,46 @@ export class EditorComponent extends LitElement {
             position: relative;
         }
 
-        .editor-input {
-            flex: 1;            /* Dynamic expansion: Take up exactly what's left in the flex layout */
+        .editor-body {
+            display: flex;
+            flex: 1;
+            min-height: 0;
             width: 100%;
             height: 100%;
-            min-height: 0;      /* CRITICAL: Force the layout engine to clamp it and use its scrollbar */
-            min-width: 0;      /* CRITICAL: Force the layout engine to clamp it and use its scrollbar */
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Line numbers gutter */
+        .line-numbers-gutter {
+            min-width: 44px;
+            width: auto;
+            background: var(--midi-btn-bg);
+            border-right: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-family: var(--font-code);
+            font-size: 0.85rem;
+            line-height: 1.6;
+            text-align: right;
+            padding: 16px 8px 16px 6px;
+            user-select: none;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            box-sizing: border-box;
+        }
+
+        .line-numbers-gutter div {
+            padding-right: 4px;
+        }
+
+        .editor-input {
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+            min-width: 0;
             padding: 16px;
             font-family: var(--font-code);
             font-size: 0.85rem;
@@ -146,12 +182,10 @@ export class EditorComponent extends LitElement {
             word-wrap: normal;
             tab-size: 4;
             caret-color: var(--accent-violet);
-            box-sizing: border-box; /* Ensures the 16px padding doesn't create artificial overflow scrolling */
+            box-sizing: border-box;
         }
 
         /* ─── Toolbar Drawer ──────────────────────────────────────────────── */
-
-        /* Backdrop — closes drawer when clicking outside */
         .toolbar-backdrop {
             position: absolute;
             inset: 0;
@@ -165,7 +199,6 @@ export class EditorComponent extends LitElement {
             pointer-events: auto;
         }
 
-        /* Drawer panel that slides up from the bottom of .editor-content */
         .quick-toolbar {
             position: absolute;
             bottom: 0;
@@ -182,8 +215,6 @@ export class EditorComponent extends LitElement {
             box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.15);
             overflow-x: auto;
             scrollbar-width: none;
-
-            /* Slide transition */
             transform: translateY(100%);
             transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
                         box-shadow 0.25s ease;
@@ -199,22 +230,11 @@ export class EditorComponent extends LitElement {
         }
 
         /* ─── Toolbar Contents ────────────────────────────────────────────── */
-
         .toolbar-group {
             display: flex;
             align-items: center;
             gap: 4px;
             flex-wrap: nowrap;
-        }
-
-        .toolbar-group-label {
-            font-size: 0.7rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            color: var(--text-muted);
-            margin-right: 6px;
-            letter-spacing: 0.05em;
-            flex-shrink: 0;
         }
 
         .toolbar-btn {
@@ -256,7 +276,6 @@ export class EditorComponent extends LitElement {
             flex-shrink: 0;
         }
 
-        /* Invisible trailing spacer — mirrors the leading padding-left on the first button */
         .toolbar-end-spacer {
             width: 12px;
             flex-shrink: 0;
@@ -278,6 +297,12 @@ export class EditorComponent extends LitElement {
             .editor-input {
                 font-size: 0.8rem;
                 padding: 12px;
+            }
+
+            .line-numbers-gutter {
+                min-width: 36px;
+                font-size: 0.8rem;
+                padding: 12px 6px 12px 4px;
             }
 
             .quick-toolbar {
@@ -312,13 +337,8 @@ export class EditorComponent extends LitElement {
             }
         }
 
-        /* Container queries for dynamic splitter resizing sensitivity */
         @container (max-width: 520px) {
             .title-text {
-                display: none !important;
-            }
-
-            .btn-text {
                 display: none !important;
             }
 
@@ -353,6 +373,37 @@ export class EditorComponent extends LitElement {
         super();
         this.abcCode = '';
         this.toolbarOpen = false;
+        this.showLineNumbers = localStorage.getItem('staveEditorShowLineNumbers') !== 'false';
+        this.lineNumbers = [1];
+    }
+
+    updated(changedProperties) {
+        if (changedProperties.has('abcCode')) {
+            this.updateLineNumbers();
+        }
+    }
+
+    updateLineNumbers() {
+        const lineCount = Math.max(1, (this.abcCode || '').split('\n').length);
+        if (this.lineNumbers.length !== lineCount) {
+            this.lineNumbers = Array.from({ length: lineCount }, (_, i) => i + 1);
+            this.requestUpdate();
+        }
+    }
+
+    toggleLineNumbers() {
+        this.showLineNumbers = !this.showLineNumbers;
+        localStorage.setItem('staveEditorShowLineNumbers', String(this.showLineNumbers));
+        this.requestUpdate();
+        setTimeout(() => this.syncScroll(), 10);
+    }
+
+    syncScroll() {
+        const textarea = this.shadowRoot?.querySelector('.editor-input');
+        const gutter = this.shadowRoot?.querySelector('.line-numbers-gutter');
+        if (textarea && gutter && this.showLineNumbers) {
+            gutter.scrollTop = textarea.scrollTop;
+        }
     }
 
     toggleToolbar() {
@@ -364,7 +415,10 @@ export class EditorComponent extends LitElement {
     }
 
     handleInput(e) {
+        this.abcCode = e.target.value;
+        this.updateLineNumbers();
         this._dispatchABCChanged(e.target.value);
+        this.syncScroll();
     }
 
     _dispatchABCChanged(value) {
@@ -390,8 +444,10 @@ export class EditorComponent extends LitElement {
         reader.onload = (event) => {
             const content = event.target.result;
             this.abcCode = content;
+            this.updateLineNumbers();
             this._dispatchABCChanged(content);
             e.target.value = '';
+            setTimeout(() => this.syncScroll(), 10);
         };
         reader.readAsText(file);
     }
@@ -432,6 +488,7 @@ export class EditorComponent extends LitElement {
 
         if (confirm('⚠️ WARNING: This will delete everything in the editor.\n\nAre you sure you want to clear all contents? This action cannot be undone.')) {
             this.abcCode = '';
+            this.updateLineNumbers();
             this._dispatchABCChanged('');
         }
     }
@@ -453,7 +510,9 @@ export class EditorComponent extends LitElement {
         textarea.selectionStart = textarea.selectionEnd = newCursorPos;
         textarea.focus();
 
+        this.updateLineNumbers();
         this._dispatchABCChanged(newValue);
+        this.syncScroll();
     }
 
     render() {
@@ -474,6 +533,14 @@ export class EditorComponent extends LitElement {
                             🎹
                         </button>
 
+                        <button
+                            class="action-btn toggle-lines-btn ${this.showLineNumbers ? 'active' : ''}"
+                            @click="${this.toggleLineNumbers}"
+                            title="${this.showLineNumbers ? 'Hide line numbers' : 'Show line numbers'}"
+                        >
+                            🔢
+                        </button>
+
                         <button class="action-btn" @click="${this.triggerFileInput}" title="Load .abc notation file from your device">
                             📂
                         </button>
@@ -487,14 +554,22 @@ export class EditorComponent extends LitElement {
                 </div>
 
                 <div class="editor-content">
-                    <textarea
-                        class="editor-input"
-                        placeholder="Write your ABC Notation here..."
-                        spellcheck="false"
-                        wrap="off"
-                        .value="${this.abcCode}"
-                        @input="${this.handleInput.bind(this)}"
-                    ></textarea>
+                    <div class="editor-body">
+                        ${this.showLineNumbers ? html`
+                            <div class="line-numbers-gutter">
+                                ${this.lineNumbers.map(n => html`<div>${n}</div>`)}
+                            </div>
+                        ` : ''}
+                        <textarea
+                            class="editor-input"
+                            placeholder="Write your ABC Notation here..."
+                            spellcheck="false"
+                            wrap="off"
+                            .value="${this.abcCode}"
+                            @input="${this.handleInput.bind(this)}"
+                            @scroll="${this.syncScroll.bind(this)}"
+                        ></textarea>
+                    </div>
 
                     <!-- Backdrop: clicking it closes the drawer -->
                     <div
@@ -540,3 +615,4 @@ export class EditorComponent extends LitElement {
         `;
     }
 }
+
