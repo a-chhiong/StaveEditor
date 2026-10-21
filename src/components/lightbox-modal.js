@@ -379,22 +379,6 @@ export class LightboxModal extends LitElement {
             animation: lb-spin 0.8s linear infinite;
         }
 
-        /* ── Hint footer (Desktop only) ────────────────────────────────── */
-        .hint {
-            position: absolute;
-            bottom: 78px;
-            left: 50%;
-            transform: translateX(-50%);
-            font-family: var(--font-ui, sans-serif);
-            font-size: 0.72rem;
-            letter-spacing: 0.03em;
-            color: var(--text-secondary, rgba(30, 41, 59, 0.65));
-            pointer-events: none;
-            white-space: nowrap;
-            user-select: none;
-            z-index: 999;
-        }
-
         /* ── Animations ────────────────────────────────────────────────── */
         @keyframes lb-open {
             from { opacity: 0; transform: scale(0.96); }
@@ -478,10 +462,7 @@ export class LightboxModal extends LitElement {
                 padding: 16px;
             }
 
-            .hint {
-                display: none;
             }
-        }
     `;
 
     constructor() {
@@ -1013,9 +994,6 @@ export class LightboxModal extends LitElement {
                         <!-- Cloned SVG injected here -->
                     </div>
                 </div>
-
-                <!-- Hint text (Desktop) -->
-                <div class="hint">Drag to pan • Pinch / Scroll to zoom • Space to play/pause • Esc to close</div>
 
                 <!-- BOTTOM CENTER: Full-Width Music Playback Controls -->
                 <div class="playback-toolbar">
